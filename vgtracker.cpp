@@ -144,7 +144,7 @@ void VGTracker::on_addRow_clicked()
     this->addEmptyRow(&tableFormat);
 }
 
-// Handler for cliking button that saves changes done to the table to database
+// Handler for clicking button that saves changes done to the table to database
 void VGTracker::on_saveTable_clicked()
 {
 
