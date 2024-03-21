@@ -55,9 +55,18 @@ std::vector<int> VGTracker::drawTable()
     dbaccess.getTableColumns(&visibleTable, &tableColumns, &tableColumnDataTypes);
     //ui->tableWidget->setRowCount(2);
     ui->tableWidget->setColumnCount(tableColumns.size());
+    ui->tableWidget->setStyleSheet("QHeaderView::section { background-color:#d9d9d9; font-weight:bold }"); //header to light grey and text bold
     for (int i = 0; i < tableColumns.size(); i++)
     {
         ui->tableWidget->setHorizontalHeaderItem(i, new QTableWidgetItem(tableColumns.at(i)));
+        if (tableColumnDataTypes.at(i) == types::columnType::text)
+        {
+            ui->tableWidget->setColumnWidth(i, ui->tableWidget->columnWidth(i) * 3);
+        }
+        else if (tableColumnDataTypes.at(i) == types::columnType::integer && !i) //if first column is int, assume it's id -> make column small
+        {
+            ui->tableWidget->setColumnWidth(i, static_cast<int>(ui->tableWidget->columnWidth(i) * 0.5));
+        }
         qDebug() << tableColumnDataTypes.at(i);
     }
 
@@ -74,6 +83,9 @@ void VGTracker::addCheckboxToTable(int row, int col, bool checked=false)
     layoutCheckBox->addWidget(checkBox);            // Set the checkbox in the layer
     layoutCheckBox->setAlignment(Qt::AlignCenter);  // Center the checkbox
     layoutCheckBox->setContentsMargins(0,0,0,0);    // Set the zero padding
+    connect(checkBox, &QCheckBox::clicked, this, [=]() {
+        emit ui->tableWidget->cellChanged(row, col); // Emit cellChanged signal when checkbox is clicked
+    });
     ui->tableWidget->setCellWidget(row,col,checkBoxWidget);
 }
 
@@ -105,6 +117,7 @@ void VGTracker::addEmptyRow(std::vector<int>* format)
         }
         columnCounter++;
     }
+    tableContent.push_back(tableRow());
 }
 
 // Handler for clicking "add platform" button in main gui
@@ -129,5 +142,33 @@ void VGTracker::on_addPlatformButton_clicked()
 void VGTracker::on_addRow_clicked()
 {
     this->addEmptyRow(&tableFormat);
+}
+
+// Handler for cliking button that saves changes done to the table to database
+void VGTracker::on_saveTable_clicked()
+{
+
+}
+
+// This should get called whenever data in some cell changes
+void VGTracker::on_tableWidget_cellChanged(int row, int column)
+{
+    if (!column && tableFormat.at(0) == types::columnType::integer)
+    {
+        return; //id is not user changable -> ignore
+    }
+
+    qDebug() << "data changed: " << row << " " << column;
+
+    if (tableFormat.at(column) == types::columnType::boolean)
+    {
+        // this is fucking stupid but its how the cells are constructed ¯\_(ツ)_/¯
+        QWidget *cellWidget = ui->tableWidget->cellWidget(row, column);
+        QHBoxLayout *layout = qobject_cast<QHBoxLayout*>(cellWidget->layout());
+        QCheckBox *checkBox = qobject_cast<QCheckBox*>(layout->itemAt(0)->widget());
+        bool isChecked = checkBox->isChecked();
+        qDebug() << isChecked;
+    }
+
 }
 

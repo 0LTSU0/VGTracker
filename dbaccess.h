@@ -14,7 +14,8 @@ private:
                               "name TEXT NOT NULL,"
                               "completed BOOL,"
                               "platinum BOOL,"
-                              "pricePaid FLOAT);";
+                              "pricePaid FLOAT,"
+                              "notes TEXT);";
 
 public:
     dbAccess();

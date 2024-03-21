@@ -24,6 +24,10 @@ private slots:
 
     void on_addRow_clicked();
 
+    void on_saveTable_clicked();
+
+    void on_tableWidget_cellChanged(int row, int column);
+
 private:
     Ui::VGTracker *ui;
 
@@ -31,6 +35,9 @@ private:
     dbAccess dbaccess;
     QString visibleTable;
     std::vector<int> tableFormat;
+
+    //table
+    std::vector<tableRow> tableContent;
 
     // funtions
     bool addPlatformsToUI();

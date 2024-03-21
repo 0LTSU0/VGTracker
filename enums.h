@@ -22,4 +22,16 @@ inline std::map<QString, int> dbTypeMap{{"INTEGER", types::columnType::integer},
 
 }
 
+// datastructure that corresponds to format of table
+class tableRow
+{
+public:
+    int id;
+    QString name;
+    bool completed;
+    bool platinum;
+    float pricePaid;
+    QString notes;
+};
+
 #endif // ENUMS_H
