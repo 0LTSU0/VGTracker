@@ -38,11 +38,16 @@ private:
 
     //table
     std::vector<tableRow> tableContent;
+    std::vector<int> rowsWithChanges;
 
     // funtions
     bool addPlatformsToUI();
     std::vector<int> drawTable();
     void addCheckboxToTable(int row, int col, bool checked);
     void addEmptyRow(std::vector<int>* format);
+    bool checkIfRowAlreadyChanged(int checkRow);
+    bool validateTable();
+    void saveNewRows();
+    void applyChangesToVector();
 };
 #endif // VGTRACKER_H

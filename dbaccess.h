@@ -24,6 +24,7 @@ public:
     void getPlatforms(std::vector<QString>* outputPlatforms);
     int addNewPlatfromToDb(QString *tableName);
     void getTableColumns(QString* tableName, std::vector<QString>* result, std::vector<int>* datatypes);
+    void addNewRowToDB(tableRow*, QString*);
 };
 
 #endif // DBACCESS_H

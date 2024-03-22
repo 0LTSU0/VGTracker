@@ -1,5 +1,8 @@
 #include "dbaccess.h"
 #include <iostream>
+#include <QDebug>
+
+#include <string>
 
 dbAccess::dbAccess() {}
 
@@ -69,4 +72,16 @@ void dbAccess::getTableColumns(QString* tableName, std::vector<QString>* result,
         datatypes->push_back(types::dbTypeMap[QString::fromUtf8(reinterpret_cast<const char *>(columnDataType))]);
     }
     sqlite3_finalize(stmt);
+}
+
+void dbAccess::addNewRowToDB(tableRow* newRow, QString* tableName)
+{
+    std::string completed = newRow->completed ? "TRUE":"FALSE";
+    std::string platinum = newRow->completed ? "TRUE":"FALSE";
+    std::string priceStr = std::to_string(newRow->pricePaid);
+
+    std::string sql = "INSERT INTO " + tableName->toStdString() + "(name,completed,platinum,pricePaid,notes) VALUES('"
+                      + newRow->name.toStdString() + "','" + completed + "','" + platinum + "','" + priceStr + "','" + newRow->notes.toStdString() + "');";
+
+    qDebug() << sql;
 }

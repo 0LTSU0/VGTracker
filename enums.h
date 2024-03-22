@@ -34,4 +34,7 @@ public:
     QString notes;
 };
 
+// define max int to mean row id thats not yet saved in db
+inline int notYetInDb = 2147483647;
+
 #endif // ENUMS_H
