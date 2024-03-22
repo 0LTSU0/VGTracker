@@ -1,7 +1,7 @@
 #include "vgtracker.h"
 #include "./ui_vgtracker.h"
-#include "qlineedit.h"
 #include "waddplatform.h"
+#include "errordialog.h"
 //#include "enums.h"
 #include <QCheckBox>
 #include <QDebug>
@@ -122,24 +122,6 @@ void VGTracker::addEmptyRow(std::vector<int>* format)
     tableContent.back().id = notYetInDb;
 }
 
-// Handler for clicking "add platform" button in main gui
-void VGTracker::on_addPlatformButton_clicked()
-{
-    WaddPlatform addPlatformDialog;
-    addPlatformDialog.setModal(true); //blocks using main window
-    int res = addPlatformDialog.exec();
-    if (res == QDialog::Accepted)
-    {
-        QString newPlatform = addPlatformDialog.getNewPlatformName();
-        std::cout << "Adding new platform with input " << newPlatform.toStdString() << std::endl;
-        res = dbaccess.addNewPlatfromToDb(&newPlatform);
-        if (!res)
-        {
-            ui->platformSelectDropdown->addItem(newPlatform);
-        }
-    }
-}
-
 // Check if it's already known that row being edited differs from database
 bool VGTracker::checkIfRowAlreadyChanged(int checkRow)
 {
@@ -155,9 +137,68 @@ bool VGTracker::checkIfRowAlreadyChanged(int checkRow)
     return wasAlreadyChanged;
 }
 
-bool VGTracker::validateTable()
+//Check if all data in the table is valid
+bool VGTracker::validateTable(int *errorLoc)
 {
-    //TODO: Check if all data inputted to the table are valid and can be saved to db
+    QTableWidgetItem* item;
+    bool ok;
+    //TODO: Return some kind of error message that explains why the cell is invalid
+    for (int row=0; row < ui->tableWidget->rowCount(); row++)
+    {
+        for (int col=0; col < ui->tableWidget->columnCount(); col++)
+        {
+            switch(tableFormat.at(col)){
+            case types::columnType::integer:
+                if (col == 0)
+                {
+                    continue;
+                }
+                item = ui->tableWidget->item(row, col);
+                if (item != nullptr)
+                {
+                    item->text().toInt(&ok);
+                    if (!ok)
+                    {
+                        qDebug() << "int check failed in " << row << " " << col;
+                        errorLoc[0] = row;
+                        errorLoc[1] = col;
+                        return false;
+                    }
+                }
+                break;
+            case types::columnType::text:
+                if (col == 1) //currently name is required which happens to be column 1. TODO: somehow flag which columns need to have text
+                {
+                    item = ui->tableWidget->item(row, col);
+                    if (item == nullptr)
+                    {
+                        qDebug() << "text check failed in " << row << " " << col;
+                        errorLoc[0] = row;
+                        errorLoc[1] = col;
+                        return false;
+                    }
+                }
+                break; //text can be anything usually -> no need to check
+            case types::columnType::boolean:
+                break; //assuming table was constructed correctly, there should be a checkbox that is either checked or not -> no need to check anything
+            case types::columnType::decimal:
+                item = ui->tableWidget->item(row, col);
+                if (item != nullptr)
+                {
+                    item->text().toFloat(&ok);
+                    if (!ok)
+                    {
+                        qDebug() << "float check failed in " << row << " " << col;
+                        errorLoc[0] = row;
+                        errorLoc[1] = col;
+                        return false;
+                    }
+                }
+                break;
+            }
+        }
+
+    }
     return true;
 }
 
@@ -222,6 +263,24 @@ void VGTracker::applyChangesToVector()
     }
 }
 
+// Handler for clicking "add platform" button in main gui
+void VGTracker::on_addPlatformButton_clicked()
+{
+    WaddPlatform addPlatformDialog;
+    addPlatformDialog.setModal(true); //blocks using main window
+    int res = addPlatformDialog.exec();
+    if (res == QDialog::Accepted)
+    {
+        QString newPlatform = addPlatformDialog.getNewPlatformName();
+        std::cout << "Adding new platform with input " << newPlatform.toStdString() << std::endl;
+        res = dbaccess.addNewPlatfromToDb(&newPlatform);
+        if (!res)
+        {
+            ui->platformSelectDropdown->addItem(newPlatform);
+        }
+    }
+}
+
 // Handler for clicking "new row" button in main gui
 void VGTracker::on_addRow_clicked()
 {
@@ -231,11 +290,21 @@ void VGTracker::on_addRow_clicked()
 // Handler for clicking button that saves changes done to the table to database
 void VGTracker::on_saveTable_clicked()
 {
-    if (VGTracker::validateTable())
+    int errorLocation[2];
+    if (VGTracker::validateTable(errorLocation))
     {
         VGTracker::applyChangesToVector();
         VGTracker::saveNewRows();
         //saveEditedRows() //TODO. also remember to check that only previously saved rows are stored
+    }
+    else
+    {
+        // If table validation failed, show error message
+        errorDialog errordialog;
+        errordialog.setModal(true); //blocks using main window
+        errordialog.setErrorMsg(errorLocation);
+        int res = errordialog.exec();
+        qDebug() << "error dialog closed " << res;
     }
 }
 

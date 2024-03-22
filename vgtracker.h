@@ -46,7 +46,7 @@ private:
     void addCheckboxToTable(int row, int col, bool checked);
     void addEmptyRow(std::vector<int>* format);
     bool checkIfRowAlreadyChanged(int checkRow);
-    bool validateTable();
+    bool validateTable(int *errorLoc);
     void saveNewRows();
     void applyChangesToVector();
 };

@@ -29,6 +29,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         waddplatform.h waddplatform.cpp waddplatform.ui
         dbaccess.h dbaccess.cpp
         enums.h
+        errordialog.h errordialog.cpp errordialog.ui
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET VGTracker APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
