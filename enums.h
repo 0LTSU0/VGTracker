@@ -17,8 +17,8 @@ enum columnType
 
 inline std::map<QString, int> dbTypeMap{{"INTEGER", types::columnType::integer},
                                  {"TEXT", types::columnType::text, },
-                                 {"BOOL", types::columnType::boolean},
-                                 {"FLOAT", types::columnType::decimal}};
+                                 {"BOOLEAN", types::columnType::boolean},
+                                 {"REAL", types::columnType::decimal}};
 
 }
 

@@ -18,6 +18,7 @@ VGTracker::VGTracker(QWidget *parent)
     if (tablesExists)
     {
         tableFormat = this->drawTable(); //addPlatformsToUI() sets visibleTable to something. This takes column names for that table in the db and adds them to the header
+        this->addPreExistingEntriesToTable(); //get items from db for the currently visible table and add them to the tablewidget
         this->addEmptyRow(&tableFormat); //temptest, add empty row to table
     }
 }
@@ -74,6 +75,29 @@ std::vector<int> VGTracker::drawTable()
     return tableColumnDataTypes;
 }
 
+// get entries for the visible platform from db and add to display
+void VGTracker::addPreExistingEntriesToTable()
+{
+    dbaccess.getEntriesForPlatform(&visibleTable, &tableContent);
+    for (auto &entry : tableContent)
+    {
+        //TODO make less hardcoded
+        int currentNumRows = ui->tableWidget->rowCount();
+        ui->tableWidget->setRowCount(currentNumRows + 1);
+        QTableWidgetItem* item = new QTableWidgetItem(QString::number(entry.id)); //id
+        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+        ui->tableWidget->setItem(currentNumRows, 0, item);
+        item = new QTableWidgetItem(entry.name); //name
+        ui->tableWidget->setItem(currentNumRows, 1, item);
+        this->addCheckboxToTable(currentNumRows, 2, entry.completed); //completed
+        this->addCheckboxToTable(currentNumRows, 3, entry.platinum); //platinum
+        item = new QTableWidgetItem(QString::number(entry.pricePaid)); //price paid
+        ui->tableWidget->setItem(currentNumRows, 4, item);
+        item = new QTableWidgetItem(entry.notes); //notes
+        ui->tableWidget->setItem(currentNumRows, 5, item);
+    }
+}
+
 // helper function for creating a checkbox into a cell specified by row/column
 void VGTracker::addCheckboxToTable(int row, int col, bool checked=false)
 {
@@ -87,6 +111,7 @@ void VGTracker::addCheckboxToTable(int row, int col, bool checked=false)
     connect(checkBox, &QCheckBox::clicked, this, [=]() {
         emit ui->tableWidget->cellChanged(row, col); // Emit cellChanged signal when checkbox is clicked
     });
+    checkBox->setChecked(checked);
     ui->tableWidget->setCellWidget(row,col,checkBoxWidget);
 }
 
@@ -143,13 +168,14 @@ bool VGTracker::validateTable(int *errorLoc)
     QTableWidgetItem* item;
     bool ok;
     //TODO: Return some kind of error message that explains why the cell is invalid
+    //also should theoritically be enough to loop changed rows?
     for (int row=0; row < ui->tableWidget->rowCount(); row++)
     {
         for (int col=0; col < ui->tableWidget->columnCount(); col++)
         {
             switch(tableFormat.at(col)){
             case types::columnType::integer:
-                if (col == 0)
+                if (col == 0) // don't bother with primary key
                 {
                     continue;
                 }
@@ -167,7 +193,7 @@ bool VGTracker::validateTable(int *errorLoc)
                 }
                 break;
             case types::columnType::text:
-                if (col == 1) //currently name is required which happens to be column 1. TODO: somehow flag which columns need to have text
+                if (col == 1) //currently name is required in sql which happens to be column 1. TODO: somehow flag which columns are notnull in sql
                 {
                     item = ui->tableWidget->item(row, col);
                     if (item == nullptr)
@@ -185,13 +211,16 @@ bool VGTracker::validateTable(int *errorLoc)
                 item = ui->tableWidget->item(row, col);
                 if (item != nullptr)
                 {
-                    item->text().toFloat(&ok);
-                    if (!ok)
+                    if (!item->text().isEmpty())
                     {
-                        qDebug() << "float check failed in " << row << " " << col;
-                        errorLoc[0] = row;
-                        errorLoc[1] = col;
-                        return false;
+                        item->text().toFloat(&ok);
+                        if (!ok)
+                        {
+                            qDebug() << "float check failed in " << row << " " << col;
+                            errorLoc[0] = row;
+                            errorLoc[1] = col;
+                            return false;
+                        }
                     }
                 }
                 break;

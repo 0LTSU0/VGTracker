@@ -12,9 +12,9 @@ private:
 
     std::string tableFormat = "(id INTEGER PRIMARY KEY,"
                               "name TEXT NOT NULL,"
-                              "completed BOOL,"
-                              "platinum BOOL,"
-                              "pricePaid FLOAT,"
+                              "completed BOOLEAN,"
+                              "platinum BOOLEAN,"
+                              "pricePaid REAL,"
                               "notes TEXT);";
 
 public:
@@ -24,6 +24,7 @@ public:
     void getPlatforms(std::vector<QString>* outputPlatforms);
     int addNewPlatfromToDb(QString *tableName);
     void getTableColumns(QString* tableName, std::vector<QString>* result, std::vector<int>* datatypes);
+    void getEntriesForPlatform(QString *visibleTable, std::vector<tableRow> *tableContent);
     void addNewRowToDB(tableRow*, QString*);
 };
 

@@ -74,14 +74,47 @@ void dbAccess::getTableColumns(QString* tableName, std::vector<QString>* result,
     sqlite3_finalize(stmt);
 }
 
+// Fills tableRows from entries that exist for the requested platform in the db
+void dbAccess::getEntriesForPlatform(QString *visibleTable, std::vector<tableRow> *tableContent)
+{
+    std::string sqls = "SELECT * FROM ";
+    sqls.append(visibleTable->toStdString());
+    sqls.append(";");
+    qDebug() << "getEntriesForPlatform " << sqls;
+    const char* sql = sqls.c_str();
+
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        std::cerr << "SQL error: " << sqlite3_errmsg(db) << std::endl;
+    }
+
+    //TODO: make less hardcoded. Currently no way to know what column correspons to what member in tableRow
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        tableRow newEntry;
+        newEntry.id = sqlite3_column_int(stmt, 0);
+        newEntry.name = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1)));
+        newEntry.completed = sqlite3_column_int(stmt, 2);
+        newEntry.platinum = sqlite3_column_int(stmt, 3);
+        newEntry.pricePaid = sqlite3_column_double(stmt, 4);
+        newEntry.notes = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 5)));
+        tableContent->push_back(newEntry);
+    }
+    sqlite3_finalize(stmt);
+}
+
 void dbAccess::addNewRowToDB(tableRow* newRow, QString* tableName)
 {
-    std::string completed = newRow->completed ? "TRUE":"FALSE";
-    std::string platinum = newRow->completed ? "TRUE":"FALSE";
+    std::string completed = newRow->completed ? "1":"0";
+    std::string platinum = newRow->platinum ? "1":"0";
     std::string priceStr = std::to_string(newRow->pricePaid);
 
-    std::string sql = "INSERT INTO " + tableName->toStdString() + "(name,completed,platinum,pricePaid,notes) VALUES('"
+    std::string sqls = "INSERT INTO " + tableName->toStdString() + "(name,completed,platinum,pricePaid,notes) VALUES('"
                       + newRow->name.toStdString() + "','" + completed + "','" + platinum + "','" + priceStr + "','" + newRow->notes.toStdString() + "');";
+    qDebug() << sqls;
 
-    qDebug() << sql;
+    const char* sql = sqls.c_str();
+    char *zErrMsg = 0;
+    int rc = sqlite3_exec(db, sql, nullptr, nullptr, &zErrMsg);
+    qDebug() << rc << " " << zErrMsg;
 }
