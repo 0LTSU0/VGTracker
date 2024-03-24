@@ -7,6 +7,7 @@
 #include <QDebug>
 
 #include <iostream>
+#include <algorithm>
 
 VGTracker::VGTracker(QWidget *parent)
     : QMainWindow(parent)
@@ -244,6 +245,19 @@ void VGTracker::saveNewRows()
     }
 }
 
+void VGTracker::saveEditedRows()
+{
+    // TODO: this is stupid and slow, could instead just do "for row in rowsWithChanges"
+    for (int tableItemRow = 0; tableItemRow < tableContent.size(); tableItemRow++)
+    {
+        // https://stackoverflow.com/a/3450906
+        if (std::find(rowsWithChanges.begin(), rowsWithChanges.end(), tableItemRow) != rowsWithChanges.end())
+        {
+            dbaccess.editRowInDb(&tableContent.at(tableItemRow), &visibleTable);
+        }
+    }
+}
+
 void VGTracker::clearAndRedrawTable()
 {
     ignoreTableChanges = true;
@@ -343,7 +357,8 @@ void VGTracker::on_saveTable_clicked()
     {
         VGTracker::applyChangesToVector();
         VGTracker::saveNewRows();
-        //saveEditedRows() //TODO. also remember to check that only previously saved rows are stored
+        VGTracker::saveEditedRows();
+        VGTracker::clearAndRedrawTable();
     }
     else
     {
@@ -383,7 +398,7 @@ void VGTracker::on_tableWidget_cellChanged(int row, int column)
     }
 }
 
-// This is called whenever the platform select dropdown is edited
+// This is called whenever the platform select dropdown is changed
 void VGTracker::on_platformSelectDropdown_currentTextChanged(const QString &arg1)
 {
     if (ignoreTableChanges)
@@ -393,4 +408,3 @@ void VGTracker::on_platformSelectDropdown_currentTextChanged(const QString &arg1
     visibleTable = arg1;
     clearAndRedrawTable();
 }
-

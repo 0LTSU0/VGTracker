@@ -52,6 +52,7 @@ private:
     bool checkIfRowAlreadyChanged(int checkRow);
     bool validateTable(int *errorLoc);
     void saveNewRows();
+    void saveEditedRows();
     void applyChangesToVector();
     void clearAndRedrawTable();
 };

@@ -79,7 +79,7 @@ void dbAccess::getEntriesForPlatform(QString *visibleTable, std::vector<tableRow
 {
     std::string sqls = "SELECT * FROM ";
     sqls.append(visibleTable->toStdString());
-    sqls.append(";");
+    sqls.append(" ORDER BY name ASC;");
     qDebug() << "getEntriesForPlatform " << sqls;
     const char* sql = sqls.c_str();
 
@@ -111,6 +111,27 @@ void dbAccess::addNewRowToDB(tableRow* newRow, QString* tableName)
 
     std::string sqls = "INSERT INTO " + tableName->toStdString() + "(name,completed,platinum,pricePaid,notes) VALUES('"
                       + newRow->name.toStdString() + "','" + completed + "','" + platinum + "','" + priceStr + "','" + newRow->notes.toStdString() + "');";
+    qDebug() << sqls;
+
+    const char* sql = sqls.c_str();
+    char *zErrMsg = 0;
+    int rc = sqlite3_exec(db, sql, nullptr, nullptr, &zErrMsg);
+    qDebug() << rc << " " << zErrMsg;
+}
+
+void dbAccess::editRowInDb(tableRow* editedRow, QString* tableName)
+{
+    std::string completed = editedRow->completed ? "1":"0";
+    std::string platinum = editedRow->platinum ? "1":"0";
+    std::string priceStr = std::to_string(editedRow->pricePaid);
+
+    std::string sqls = "UPDATE " + tableName->toStdString() + " " +
+                       "SET name = '" + editedRow->name.toStdString() + "', " +
+                           "completed = '" + completed + "', " +
+                           "platinum = '" + platinum + "', " +
+                           "pricePaid = '" + priceStr + "', " +
+                           "notes = '" + editedRow->notes.toStdString() + "' " +
+                       "WHERE id = " + std::to_string(editedRow->id) + ";";
     qDebug() << sqls;
 
     const char* sql = sqls.c_str();
