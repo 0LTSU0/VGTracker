@@ -28,17 +28,20 @@ private slots:
 
     void on_tableWidget_cellChanged(int row, int column);
 
+    void on_platformSelectDropdown_currentTextChanged(const QString &arg1);
+
 private:
     Ui::VGTracker *ui;
 
     //db access class
     dbAccess dbaccess;
-    QString visibleTable;
-    std::vector<int> tableFormat;
 
     //table
     std::vector<tableRow> tableContent;
     std::vector<int> rowsWithChanges;
+    QString visibleTable;
+    std::vector<int> tableFormat;
+    bool ignoreTableChanges = false;
 
     // funtions
     bool addPlatformsToUI();
@@ -50,5 +53,6 @@ private:
     bool validateTable(int *errorLoc);
     void saveNewRows();
     void applyChangesToVector();
+    void clearAndRedrawTable();
 };
 #endif // VGTRACKER_H

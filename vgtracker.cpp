@@ -14,13 +14,15 @@ VGTracker::VGTracker(QWidget *parent)
 {
     ui->setupUi(this);
     dbaccess.loadDatabase(); //init db access
+    ignoreTableChanges = true; //TableWidget will fire bunch of row changed calls when table is being drawn -> use this to ignore while table is being constructed
     bool tablesExists = this->addPlatformsToUI(); //add pre-existing platforms to dropdown
     if (tablesExists)
     {
         tableFormat = this->drawTable(); //addPlatformsToUI() sets visibleTable to something. This takes column names for that table in the db and adds them to the header
         this->addPreExistingEntriesToTable(); //get items from db for the currently visible table and add them to the tablewidget
-        this->addEmptyRow(&tableFormat); //temptest, add empty row to table
+        //this->addEmptyRow(&tableFormat); //temptest, add empty row to table
     }
+    ignoreTableChanges = false;
 }
 
 VGTracker::~VGTracker()
@@ -242,6 +244,19 @@ void VGTracker::saveNewRows()
     }
 }
 
+void VGTracker::clearAndRedrawTable()
+{
+    ignoreTableChanges = true;
+    rowsWithChanges.clear();
+    tableContent.clear();
+    tableFormat.clear();
+    ui->tableWidget->clear();
+    ui->tableWidget->setRowCount(0);
+    tableFormat = this->drawTable(); //visibleTable should have been set to correct value before this function is called
+    this->addPreExistingEntriesToTable(); //get items from db for the visibleTable and add them to the tablewidget
+    ignoreTableChanges = false;
+}
+
 bool _qStringToFloat(QString str, float* res)
 {
     bool ok = false;
@@ -301,11 +316,15 @@ void VGTracker::on_addPlatformButton_clicked()
     if (res == QDialog::Accepted)
     {
         QString newPlatform = addPlatformDialog.getNewPlatformName();
-        std::cout << "Adding new platform with input " << newPlatform.toStdString() << std::endl;
+        qDebug() << "Adding new platform with input " << newPlatform;
+        visibleTable = newPlatform;
         res = dbaccess.addNewPlatfromToDb(&newPlatform);
         if (!res)
         {
             ui->platformSelectDropdown->addItem(newPlatform);
+            qDebug() << "on_addPlatformButton_clicked() changed visibleTable to " << visibleTable;
+            ui->platformSelectDropdown->setCurrentIndex(ui->platformSelectDropdown->count() - 1);
+            clearAndRedrawTable(); //reset table and draw with new platform
         }
     }
 }
@@ -340,7 +359,7 @@ void VGTracker::on_saveTable_clicked()
 // This should get called whenever data in some cell changes
 void VGTracker::on_tableWidget_cellChanged(int row, int column)
 {
-    if (!column && tableFormat.at(0) == types::columnType::integer)
+    if ((!column && tableFormat.at(0) == types::columnType::integer) || ignoreTableChanges)
     {
         return; //id is not user changable -> ignore
     }
@@ -362,5 +381,16 @@ void VGTracker::on_tableWidget_cellChanged(int row, int column)
     {
         rowsWithChanges.push_back(row);
     }
+}
+
+// This is called whenever the platform select dropdown is edited
+void VGTracker::on_platformSelectDropdown_currentTextChanged(const QString &arg1)
+{
+    if (ignoreTableChanges)
+    {
+        return;
+    }
+    visibleTable = arg1;
+    clearAndRedrawTable();
 }
 
