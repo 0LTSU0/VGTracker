@@ -124,6 +124,7 @@ void VGTracker::addEmptyRow(std::vector<int>* format)
     int currentNumRows = ui->tableWidget->rowCount();
     ui->tableWidget->setRowCount(currentNumRows + 1);
     int columnCounter = 0;
+    QTableWidgetItem* item;
     for (const auto &dtype : *format)
     {
         switch(dtype){
@@ -131,17 +132,21 @@ void VGTracker::addEmptyRow(std::vector<int>* format)
             if (columnCounter == 0)
             {
                 //first column is integer -> should be sql id -> disable editing of the column
-                QTableWidgetItem* item = new QTableWidgetItem("*"); //id would go here but use * as undefined
+                item = new QTableWidgetItem("*"); //id would go here but use * as undefined
                 item->setFlags(item->flags() & ~Qt::ItemIsEditable);
                 ui->tableWidget->setItem(currentNumRows, columnCounter, item);
             }
             break;
         case types::columnType::text:
+            item = new QTableWidgetItem();
+            ui->tableWidget->setItem(currentNumRows, columnCounter, item);
             break; //default behavior seems fine
         case types::columnType::boolean:
             this->addCheckboxToTable(currentNumRows, columnCounter, false);
             break;
         case types::columnType::decimal:
+            item = new QTableWidgetItem("");
+            ui->tableWidget->setItem(currentNumRows, columnCounter, item);
             break; //TODO: try to find a way to limit the characters that can be inputted
         }
         columnCounter++;
@@ -199,13 +204,24 @@ bool VGTracker::validateTable(int *errorLoc)
                 if (col == 1) //currently name is required in sql which happens to be column 1. TODO: somehow flag which columns are notnull in sql
                 {
                     item = ui->tableWidget->item(row, col);
-                    if (item == nullptr)
+                    if (item == nullptr) // if nullptr, then cell is definately empty -> return false
                     {
                         qDebug() << "text check failed in " << row << " " << col;
                         errorLoc[0] = row;
                         errorLoc[1] = col;
                         return false;
                     }
+                    else // if not nullptr but text inside cell is empty -> return false
+                    {
+                        if (item->text().isEmpty())
+                        {
+                            qDebug() << "text check failed in " << row << " " << col << " empty";
+                            errorLoc[0] = row;
+                            errorLoc[1] = col;
+                            return false;
+                        }
+                    }
+
                 }
                 break; //text can be anything usually -> no need to check
             case types::columnType::boolean:
@@ -376,7 +392,7 @@ void VGTracker::on_tableWidget_cellChanged(int row, int column)
 {
     if ((!column && tableFormat.at(0) == types::columnType::integer) || ignoreTableChanges)
     {
-        return; //id is not user changable -> ignore
+        return; //id is not user changable -> ignore. Also ignore everything if ignoreTableChanges flag is set
     }
 
     qDebug() << "data changed: " << row << " " << column;
@@ -408,3 +424,74 @@ void VGTracker::on_platformSelectDropdown_currentTextChanged(const QString &arg1
     visibleTable = arg1;
     clearAndRedrawTable();
 }
+
+// Callback for "mark for delete" button
+// If row has not been marked for delete yet, make it red and add to markedForDelete vector
+// If row is in markedForDelte vector, remove it from it and undo the red color
+void VGTracker::on_pushButton_clicked()
+{
+    ignoreTableChanges = true; //changing colors of cells will fire some of these
+    if (currentlyActiveRow == -1) //"nothing selected" value should be -1
+    {
+        return;
+    }
+
+    bool rowMarkedForDelete = std::find(markedForDelete.begin(), markedForDelete.end(), currentlyActiveRow) != markedForDelete.end();
+
+    for (int i = 0; i<tableFormat.size(); i++)
+    {
+        if (tableFormat.at(i) == types::columnType::boolean) // normal way of setting background color does not work on boolean fields
+        {
+            QWidget *cellWidget = ui->tableWidget->cellWidget(currentlyActiveRow, i);
+            if (cellWidget == nullptr)
+            {
+                qDebug() << "cellWidget was nullptr in on_pushButton_clicked! selectedRow: " << currentlyActiveRow;
+                continue; //should not be possible but just in case
+            }
+            if (rowMarkedForDelete)
+            {
+                cellWidget->setStyleSheet("background-color: white;");
+            }
+            else
+            {
+                cellWidget->setStyleSheet("background-color: red;");
+            }
+        }
+        else
+        {
+
+            if (rowMarkedForDelete)
+            {
+                ui->tableWidget->item(currentlyActiveRow,i)->setBackground(QColor(255,255,255));
+            }
+            else
+            {
+                ui->tableWidget->item(currentlyActiveRow,i)->setBackground(QColor(255,0,0));
+            }
+        }
+    }
+
+    if (!rowMarkedForDelete) // mark row for delete
+    {
+        markedForDelete.push_back(currentlyActiveRow);
+    }
+    else
+    {
+        auto it = std::find(markedForDelete.begin(), markedForDelete.end(), currentlyActiveRow);
+        if (it != markedForDelete.end())
+        {
+            markedForDelete.erase(it);
+        }
+    }
+
+    ignoreTableChanges = false;
+}
+
+// This gets called whenever some cell in table is pressed
+// Updates VGTracker.currentlyActiveRow.
+// TODO: clicking the row number in the table doesn't call this even though it probably should
+void VGTracker::on_tableWidget_cellPressed(int row, int column)
+{
+    currentlyActiveRow = row;
+}
+

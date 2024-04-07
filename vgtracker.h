@@ -30,6 +30,10 @@ private slots:
 
     void on_platformSelectDropdown_currentTextChanged(const QString &arg1);
 
+    void on_pushButton_clicked();
+
+    void on_tableWidget_cellPressed(int row, int column);
+
 private:
     Ui::VGTracker *ui;
 
@@ -39,9 +43,11 @@ private:
     //table
     std::vector<tableRow> tableContent;
     std::vector<int> rowsWithChanges;
+    std::vector<int> markedForDelete;
     QString visibleTable;
     std::vector<int> tableFormat;
     bool ignoreTableChanges = false;
+    int currentlyActiveRow = -1;
 
     // funtions
     bool addPlatformsToUI();
