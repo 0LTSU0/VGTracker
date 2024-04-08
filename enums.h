@@ -32,6 +32,7 @@ public:
     bool platinum;
     float pricePaid;
     QString notes;
+    bool _isMarkedForDelete = false;
 };
 
 // define max int to mean row id thats not yet saved in db

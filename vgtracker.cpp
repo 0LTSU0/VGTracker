@@ -179,6 +179,12 @@ bool VGTracker::validateTable(int *errorLoc)
     //also should theoritically be enough to loop changed rows?
     for (int row=0; row < ui->tableWidget->rowCount(); row++)
     {
+        //if row is marked for delete, it does not matter what data it has
+        if (tableContent.at(row)._isMarkedForDelete)
+        {
+            continue;
+        }
+
         for (int col=0; col < ui->tableWidget->columnCount(); col++)
         {
             switch(tableFormat.at(col)){
@@ -256,20 +262,35 @@ void VGTracker::saveNewRows()
     {
         if(tableRow.id == notYetInDb)
         {
-            dbaccess.addNewRowToDB(&tableRow, &visibleTable);
+            // Only send the new line to db if it's not present in the markedForDelete vector
+            if (!tableRow._isMarkedForDelete)
+            {
+                dbaccess.addNewRowToDB(&tableRow, &visibleTable);
+            }
         }
     }
 }
 
 void VGTracker::saveEditedRows()
 {
-    // TODO: this is stupid and slow, could instead just do "for row in rowsWithChanges"
+    // TODO: this is stupid and slow, could maybe instead just do "for row in rowsWithChanges"
     for (int tableItemRow = 0; tableItemRow < tableContent.size(); tableItemRow++)
     {
         // https://stackoverflow.com/a/3450906
         if (std::find(rowsWithChanges.begin(), rowsWithChanges.end(), tableItemRow) != rowsWithChanges.end())
         {
             dbaccess.editRowInDb(&tableContent.at(tableItemRow), &visibleTable);
+        }
+    }
+}
+
+void VGTracker::deleteDeletedRows()
+{
+    for (auto &row : tableContent)
+    {
+        if (row._isMarkedForDelete && row.id != notYetInDb)
+        {
+            //dbaccess.deleteRowWithId(&row.id);
         }
     }
 }
@@ -300,6 +321,11 @@ void VGTracker::applyChangesToVector()
     for (auto &row : rowsWithChanges)
     {
         tableRow &tableEntry = tableContent.at(row);
+        if (tableEntry._isMarkedForDelete)//if edited row is also marked for delete, don't bother with changing data in the vector
+        {
+            continue;
+        }
+
         // TODO make this less "hardcoded". Format of table is known but currently cannot tell what column correspond to what member in tableEntry
         QTableWidgetItem* item = ui->tableWidget->item(row, 1);
         if (item != nullptr)
@@ -374,6 +400,7 @@ void VGTracker::on_saveTable_clicked()
         VGTracker::applyChangesToVector();
         VGTracker::saveNewRows();
         VGTracker::saveEditedRows();
+        VGTracker::deleteDeletedRows();
         VGTracker::clearAndRedrawTable();
     }
     else
@@ -436,7 +463,7 @@ void VGTracker::on_pushButton_clicked()
         return;
     }
 
-    bool rowMarkedForDelete = std::find(markedForDelete.begin(), markedForDelete.end(), currentlyActiveRow) != markedForDelete.end();
+    bool rowMarkedForDelete = tableContent.at(currentlyActiveRow)._isMarkedForDelete;
 
     for (int i = 0; i<tableFormat.size(); i++)
     {
@@ -471,18 +498,19 @@ void VGTracker::on_pushButton_clicked()
         }
     }
 
-    if (!rowMarkedForDelete) // mark row for delete
-    {
-        markedForDelete.push_back(currentlyActiveRow);
-    }
-    else
-    {
-        auto it = std::find(markedForDelete.begin(), markedForDelete.end(), currentlyActiveRow);
-        if (it != markedForDelete.end())
-        {
-            markedForDelete.erase(it);
-        }
-    }
+    tableContent.at(currentlyActiveRow)._isMarkedForDelete = !rowMarkedForDelete;
+    //if (!rowMarkedForDelete) // mark row for delete
+    //{
+    //    markedForDelete.push_back(currentlyActiveRow);
+    //}
+    //else
+    //{
+    //    auto it = std::find(markedForDelete.begin(), markedForDelete.end(), currentlyActiveRow);
+    //    if (it != markedForDelete.end())
+    //    {
+    //        markedForDelete.erase(it);
+    //    }
+    //}
 
     ignoreTableChanges = false;
 }

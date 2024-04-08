@@ -41,9 +41,8 @@ private:
     dbAccess dbaccess;
 
     //table
-    std::vector<tableRow> tableContent;
+    std::vector<tableRow> tableContent; //The order of this SHOULD always correspond to order of rows in the table
     std::vector<int> rowsWithChanges;
-    std::vector<int> markedForDelete;
     QString visibleTable;
     std::vector<int> tableFormat;
     bool ignoreTableChanges = false;
@@ -59,6 +58,7 @@ private:
     bool validateTable(int *errorLoc);
     void saveNewRows();
     void saveEditedRows();
+    void deleteDeletedRows();
     void applyChangesToVector();
     void clearAndRedrawTable();
 };
