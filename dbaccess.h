@@ -27,6 +27,7 @@ public:
     void getEntriesForPlatform(QString *visibleTable, std::vector<tableRow> *tableContent);
     void addNewRowToDB(tableRow*, QString*);
     void editRowInDb(tableRow*, QString*);
+    void deleteRowWithId(int*, QString*);
 };
 
 #endif // DBACCESS_H

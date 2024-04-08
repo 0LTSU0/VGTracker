@@ -262,7 +262,7 @@ void VGTracker::saveNewRows()
     {
         if(tableRow.id == notYetInDb)
         {
-            // Only send the new line to db if it's not present in the markedForDelete vector
+            // Only send the new line to db if it's not marked for deletion
             if (!tableRow._isMarkedForDelete)
             {
                 dbaccess.addNewRowToDB(&tableRow, &visibleTable);
@@ -290,7 +290,7 @@ void VGTracker::deleteDeletedRows()
     {
         if (row._isMarkedForDelete && row.id != notYetInDb)
         {
-            //dbaccess.deleteRowWithId(&row.id);
+            dbaccess.deleteRowWithId(&row.id, &visibleTable);
         }
     }
 }
@@ -423,18 +423,6 @@ void VGTracker::on_tableWidget_cellChanged(int row, int column)
     }
 
     qDebug() << "data changed: " << row << " " << column;
-
-    //temptest
-    //if (tableFormat.at(column) == types::columnType::boolean)
-    //{
-    //    // this is fucking stupid but its how the cells are constructed ¯\_(ツ)_/¯
-    //    QWidget *cellWidget = ui->tableWidget->cellWidget(row, column);
-    //    QHBoxLayout *layout = qobject_cast<QHBoxLayout*>(cellWidget->layout());
-    //    QCheckBox *checkBox = qobject_cast<QCheckBox*>(layout->itemAt(0)->widget());
-    //    bool isChecked = checkBox->isChecked();
-    //    qDebug() << isChecked;
-    //}
-
     if (!VGTracker::checkIfRowAlreadyChanged(row))
     {
         rowsWithChanges.push_back(row);
@@ -499,19 +487,6 @@ void VGTracker::on_pushButton_clicked()
     }
 
     tableContent.at(currentlyActiveRow)._isMarkedForDelete = !rowMarkedForDelete;
-    //if (!rowMarkedForDelete) // mark row for delete
-    //{
-    //    markedForDelete.push_back(currentlyActiveRow);
-    //}
-    //else
-    //{
-    //    auto it = std::find(markedForDelete.begin(), markedForDelete.end(), currentlyActiveRow);
-    //    if (it != markedForDelete.end())
-    //    {
-    //        markedForDelete.erase(it);
-    //    }
-    //}
-
     ignoreTableChanges = false;
 }
 

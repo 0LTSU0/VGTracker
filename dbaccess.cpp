@@ -139,3 +139,14 @@ void dbAccess::editRowInDb(tableRow* editedRow, QString* tableName)
     int rc = sqlite3_exec(db, sql, nullptr, nullptr, &zErrMsg);
     qDebug() << rc << " " << zErrMsg;
 }
+
+void dbAccess::deleteRowWithId(int* id, QString* tableName)
+{
+    std::string sqls = "DELETE FROM " + tableName->toStdString() + " " +
+                       "WHERE id = " + std::to_string(*id) + ";";
+    qDebug() << sqls;
+    const char* sql = sqls.c_str();
+    char *zErrMsg = 0;
+    int rc = sqlite3_exec(db, sql, nullptr, nullptr, &zErrMsg);
+    qDebug() << "deleteRowWithId() sql returned " << rc << " " << zErrMsg;
+}
