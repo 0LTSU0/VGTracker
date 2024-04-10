@@ -3,6 +3,7 @@
 
 #include <sqlite3.h>
 #include <QString>
+#include <string>
 #include "enums.h"
 
 class dbAccess
@@ -19,7 +20,7 @@ private:
 
 public:
     dbAccess();
-    int loadDatabase();
+    int loadDatabase(std::wstring*);
     void closeDatabase();
     void getPlatforms(std::vector<QString>* outputPlatforms);
     int addNewPlatfromToDb(QString *tableName);

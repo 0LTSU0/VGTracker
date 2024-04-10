@@ -7,9 +7,11 @@
 dbAccess::dbAccess() {}
 
 // Load database. If database does not exist, it should be created
-int dbAccess::loadDatabase()
+int dbAccess::loadDatabase(std::wstring* databasePath)
 {
-    int res = sqlite3_open("database.db", &db);
+    std::string dbNameStr(databasePath->begin(), databasePath->end());
+    const char* dbNameCStr = dbNameStr.c_str();
+    int res = sqlite3_open(dbNameCStr, &db);
     std::cout << "loadDatabase() " << res << std::endl;
     return res;
 }

@@ -4,6 +4,7 @@
 #include <QMainWindow>
 
 #include "dbaccess.h"
+#include "configurator.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -39,6 +40,7 @@ private:
 
     //db access class
     dbAccess dbaccess;
+    std::wstring databasePath = L"";
 
     //table
     std::vector<tableRow> tableContent; //The order of this SHOULD always correspond to order of rows in the table
@@ -61,5 +63,8 @@ private:
     void deleteDeletedRows();
     void applyChangesToVector();
     void clearAndRedrawTable();
+    void setDbFile(std::wstring);
+
+public:
 };
 #endif // VGTRACKER_H

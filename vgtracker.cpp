@@ -14,7 +14,8 @@ VGTracker::VGTracker(QWidget *parent)
     , ui(new Ui::VGTracker)
 {
     ui->setupUi(this);
-    dbaccess.loadDatabase(); //init db access
+    setDbFile(getDbPath());
+    dbaccess.loadDatabase(&databasePath); //init db access
     ignoreTableChanges = true; //TableWidget will fire bunch of row changed calls when table is being drawn -> use this to ignore while table is being constructed
     bool tablesExists = this->addPlatformsToUI(); //add pre-existing platforms to dropdown
     if (tablesExists)
@@ -30,6 +31,12 @@ VGTracker::~VGTracker()
 {
     dbaccess.closeDatabase();
     delete ui;
+}
+
+void VGTracker::setDbFile(std::wstring dbName)
+{
+    qDebug() << "VGTracker::setDbFile(): " << dbName;
+    databasePath = dbName;
 }
 
 // Asks for platforms that are present in database and adds them to the platform select dropdown
