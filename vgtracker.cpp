@@ -160,6 +160,7 @@ void VGTracker::addEmptyRow(std::vector<int>* format)
     }
     tableContent.push_back(tableRow());
     tableContent.back().id = notYetInDb;
+    ui->tableWidget->scrollToBottom();
 }
 
 // Check if it's already known that row being edited differs from database
