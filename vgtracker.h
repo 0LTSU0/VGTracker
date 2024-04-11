@@ -5,6 +5,7 @@
 
 #include "dbaccess.h"
 #include "configurator.h"
+#include "qprogressbar.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -64,7 +65,10 @@ private:
     void applyChangesToVector();
     void clearAndRedrawTable();
     void setDbFile(std::wstring);
+    QProgressBar *progressBar;
+    void initStatusBar();
 
 public:
+    void initUI();
 };
 #endif // VGTRACKER_H

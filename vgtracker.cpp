@@ -14,6 +14,7 @@ VGTracker::VGTracker(QWidget *parent)
     , ui(new Ui::VGTracker)
 {
     ui->setupUi(this);
+    this->initStatusBar();
     setDbFile(getDbPath());
     dbaccess.loadDatabase(&databasePath); //init db access
     ignoreTableChanges = true; //TableWidget will fire bunch of row changed calls when table is being drawn -> use this to ignore while table is being constructed
@@ -37,6 +38,23 @@ void VGTracker::setDbFile(std::wstring dbName)
 {
     qDebug() << "VGTracker::setDbFile(): " << dbName;
     databasePath = dbName;
+}
+
+void VGTracker::initStatusBar()
+{
+    //Add statusbar
+    progressBar = new QProgressBar;
+    progressBar->setRange(0, 100);
+    progressBar->setTextVisible(false);
+    progressBar->setFixedWidth(200);
+    progressBar->setFixedHeight(15);
+    ui->statusBar->addPermanentWidget(progressBar);
+    ui->statusBar->showMessage("Ready");
+}
+
+void VGTracker::initUI()
+{
+    //TODO: Would be good to init the UI outisde the constructor
 }
 
 // Asks for platforms that are present in database and adds them to the platform select dropdown
