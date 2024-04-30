@@ -35,6 +35,23 @@ public:
     bool _isMarkedForDelete = false;
 };
 
+// Stat data
+class statValues
+{
+public:
+    int numItems = 0;
+    float totalPrice = 0.0;
+    int numCompleted = 0;
+    int numPlatinumed = 0;
+
+    void reset() {
+        numItems = 0;
+        totalPrice = 0.0;
+        numCompleted = 0;
+        numPlatinumed = 0;
+    }
+};
+
 // define max int to mean row id thats not yet saved in db
 inline int notYetInDb = 2147483647;
 

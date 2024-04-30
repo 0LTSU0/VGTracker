@@ -34,6 +34,64 @@ VGTracker::~VGTracker()
     delete ui;
 }
 
+//Update status bar with new message
+void VGTracker::updateStatusMessage(QString msg)
+{
+    ui->statusBar->showMessage(msg);
+    ui->statusBar->repaint(); //To make sure message is actually set visible if ui is being blocked
+}
+
+//Update statlabel with total price, number of items and complete/platinum percents
+void VGTracker::updateStatLabel(int totalItems, float totalPrice, int totalCompleted, int totalPlat)
+{
+    float completedPercent = 0.0;
+    float platinumPercent = 0.0;
+    if (totalItems)
+    {
+        completedPercent = (static_cast<float>(totalCompleted) / static_cast<float>(totalItems)) * 100.0;
+        platinumPercent = (static_cast<float>(totalPlat) / static_cast<float>(totalItems)) * 100.0;
+    }
+    QString stat = "Total items for platform: ";
+    stat.append(QString::number(totalItems));
+    stat.append(", total price paid: ");
+    stat.append(QString::number(totalPrice, 'f', 2));
+    stat.append("€, completed: ");
+    stat.append(QString::number(totalCompleted));
+    stat.append("/");
+    stat.append(QString::number(totalItems));
+    stat.append(" (");
+    stat.append(QString::number(completedPercent, 'f', 2));
+    stat.append("%), platinums: ");
+    stat.append(QString::number(totalPlat));
+    stat.append("/");
+    stat.append(QString::number(totalItems));
+    stat.append(" (");
+    stat.append(QString::number(platinumPercent, 'f', 2));
+    stat.append("%)");
+    statLabel->setText(stat);
+}
+
+//Recalculate total price in visible table
+float VGTracker::recalculateTotalPrice()
+{
+    QTableWidgetItem* item;
+    float newPrice = 0.0;
+    for (int row=0; row<ui->tableWidget->rowCount(); row++)
+    {
+        item = ui->tableWidget->item(row, 4);
+        if (!item->text().isEmpty())
+        {
+            bool ok;
+            float price = item->text().toFloat(&ok);
+            if (ok)
+            {
+                newPrice = newPrice + price;
+            }
+        }
+    }
+    return newPrice;
+}
+
 void VGTracker::setDbFile(std::wstring dbName)
 {
     qDebug() << "VGTracker::setDbFile(): " << dbName;
@@ -43,12 +101,18 @@ void VGTracker::setDbFile(std::wstring dbName)
 void VGTracker::initStatusBar()
 {
     //Add statusbar
-    progressBar = new QProgressBar;
-    progressBar->setRange(0, 100);
-    progressBar->setTextVisible(false);
-    progressBar->setFixedWidth(200);
-    progressBar->setFixedHeight(15);
-    ui->statusBar->addPermanentWidget(progressBar);
+    //progressBar = new QProgressBar;
+    //progressBar->setRange(0, 100);
+    //progressBar->setTextVisible(false);
+    //progressBar->setFixedWidth(200);
+    //progressBar->setFixedHeight(15);
+    //ui->statusBar->addPermanentWidget(progressBar);
+    statLabel = new QLabel;
+    statLabel->setFixedWidth(600);
+    statLabel->setFixedHeight(15);
+    statLabel->setAlignment(Qt::AlignRight);
+    updateStatLabel(0, 0.0, 0, 0);
+    ui->statusBar->addPermanentWidget(statLabel);
     ui->statusBar->showMessage("Ready");
 }
 
@@ -106,7 +170,9 @@ std::vector<int> VGTracker::drawTable()
 // get entries for the visible platform from db and add to display
 void VGTracker::addPreExistingEntriesToTable()
 {
+    statVals.reset();
     dbaccess.getEntriesForPlatform(&visibleTable, &tableContent);
+    statVals.numItems = tableContent.size();
     for (auto &entry : tableContent)
     {
         //TODO make less hardcoded
@@ -118,12 +184,22 @@ void VGTracker::addPreExistingEntriesToTable()
         item = new QTableWidgetItem(entry.name); //name
         ui->tableWidget->setItem(currentNumRows, 1, item);
         this->addCheckboxToTable(currentNumRows, 2, entry.completed); //completed
+        if (entry.completed)
+        {
+            statVals.numCompleted++;
+        }
         this->addCheckboxToTable(currentNumRows, 3, entry.platinum); //platinum
+        if (entry.platinum)
+        {
+            statVals.numPlatinumed++;
+        }
         item = new QTableWidgetItem(QString::number(entry.pricePaid)); //price paid
+        statVals.totalPrice = statVals.totalPrice + entry.pricePaid;
         ui->tableWidget->setItem(currentNumRows, 4, item);
         item = new QTableWidgetItem(entry.notes); //notes
         ui->tableWidget->setItem(currentNumRows, 5, item);
     }
+    updateStatLabel(statVals.numItems, statVals.totalPrice, statVals.numCompleted, statVals.numPlatinumed);
 }
 
 // helper function for creating a checkbox into a cell specified by row/column
@@ -282,12 +358,14 @@ bool VGTracker::validateTable(int *errorLoc)
     return true;
 }
 
-void VGTracker::saveNewRows()
+int VGTracker::saveNewRows()
 {
+    int ctr = 0;
     for (auto &tableRow : tableContent)
     {
         if(tableRow.id == notYetInDb)
         {
+            ctr++;
             // Only send the new line to db if it's not marked for deletion
             if (!tableRow._isMarkedForDelete)
             {
@@ -295,6 +373,7 @@ void VGTracker::saveNewRows()
             }
         }
     }
+    return ctr;
 }
 
 void VGTracker::saveEditedRows()
@@ -323,6 +402,7 @@ void VGTracker::deleteDeletedRows()
 
 void VGTracker::clearAndRedrawTable()
 {
+    updateStatusMessage("Redrawing table");
     ignoreTableChanges = true;
     rowsWithChanges.clear();
     tableContent.clear();
@@ -332,6 +412,7 @@ void VGTracker::clearAndRedrawTable()
     tableFormat = this->drawTable(); //visibleTable should have been set to correct value before this function is called
     this->addPreExistingEntriesToTable(); //get items from db for the visibleTable and add them to the tablewidget
     ignoreTableChanges = false;
+    updateStatusMessage("Ready");
 }
 
 bool _qStringToFloat(QString str, float* res)
@@ -415,22 +496,28 @@ void VGTracker::on_addPlatformButton_clicked()
 void VGTracker::on_addRow_clicked()
 {
     this->addEmptyRow(&tableFormat);
+    statVals.numItems++;
+    updateStatLabel(statVals.numItems, statVals.totalPrice, statVals.numCompleted, statVals.numPlatinumed);
 }
 
 // Handler for clicking button that saves changes done to the table to database
 void VGTracker::on_saveTable_clicked()
 {
+    updateStatusMessage("Validating table");
     int errorLocation[2];
     if (VGTracker::validateTable(errorLocation))
     {
+        updateStatusMessage("Saving changes");
         VGTracker::applyChangesToVector();
         VGTracker::saveNewRows();
         VGTracker::saveEditedRows();
         VGTracker::deleteDeletedRows();
         VGTracker::clearAndRedrawTable();
+        updateStatusMessage("Ready");
     }
     else
     {
+        updateStatusMessage("Table validation failed");
         // If table validation failed, show error message
         errorDialog errordialog;
         errordialog.setModal(true); //blocks using main window
@@ -453,6 +540,44 @@ void VGTracker::on_tableWidget_cellChanged(int row, int column)
     {
         rowsWithChanges.push_back(row);
     }
+
+    //Update statLabel. TODO: make non hardcoded indexes
+    QWidget *cellWidget;
+    QHBoxLayout *layout;
+    QCheckBox *checkBox;
+    switch(column)
+    {
+    case 2: //completed checkbox
+        cellWidget = ui->tableWidget->cellWidget(row, 2);
+        layout = qobject_cast<QHBoxLayout*>(cellWidget->layout());
+        checkBox = qobject_cast<QCheckBox*>(layout->itemAt(0)->widget());
+        if (checkBox->isChecked())
+        {
+            statVals.numCompleted++;
+        }
+        else
+        {
+            statVals.numCompleted--;
+        }
+        break;
+    case 3: //platinumed checkbox
+        cellWidget = ui->tableWidget->cellWidget(row, 3);
+        layout = qobject_cast<QHBoxLayout*>(cellWidget->layout());
+        checkBox = qobject_cast<QCheckBox*>(layout->itemAt(0)->widget());
+        if (checkBox->isChecked())
+        {
+            statVals.numPlatinumed++;
+        }
+        else
+        {
+            statVals.numPlatinumed--;
+        }
+        break;
+    case 4: //price
+        statVals.totalPrice = recalculateTotalPrice();
+        break;
+    }
+    updateStatLabel(statVals.numItems, statVals.totalPrice, statVals.numCompleted, statVals.numPlatinumed);
 }
 
 // This is called whenever the platform select dropdown is changed

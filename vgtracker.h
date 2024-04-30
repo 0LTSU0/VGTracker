@@ -5,6 +5,7 @@
 
 #include "dbaccess.h"
 #include "configurator.h"
+#include "qlabel.h"
 #include "qprogressbar.h"
 
 QT_BEGIN_NAMESPACE
@@ -51,6 +52,9 @@ private:
     bool ignoreTableChanges = false;
     int currentlyActiveRow = -1;
 
+    //stats
+    statValues statVals;
+
     // funtions
     bool addPlatformsToUI();
     std::vector<int> drawTable();
@@ -59,14 +63,18 @@ private:
     void addEmptyRow(std::vector<int>* format);
     bool checkIfRowAlreadyChanged(int checkRow);
     bool validateTable(int *errorLoc);
-    void saveNewRows();
+    int saveNewRows();
     void saveEditedRows();
     void deleteDeletedRows();
     void applyChangesToVector();
     void clearAndRedrawTable();
     void setDbFile(std::wstring);
     QProgressBar *progressBar;
+    QLabel *statLabel;
     void initStatusBar();
+    void updateStatusMessage(QString);
+    void updateStatLabel(int, float, int, int);
+    float recalculateTotalPrice();
 
 public:
     void initUI();
