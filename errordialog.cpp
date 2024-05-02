@@ -18,3 +18,8 @@ void errorDialog::setErrorMsg(int *errorLoc)
     QString errorMsg = "Invalid data in cell [" + QString::number(errorLoc[0]) + "," + QString::number(errorLoc[1]) + "]!";
     ui->errorMsg->setText(errorMsg);
 }
+
+void errorDialog::setErrorMsg(QString msg)
+{
+    ui->errorMsg->setText(msg);
+}

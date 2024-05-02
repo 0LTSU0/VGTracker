@@ -495,6 +495,14 @@ void VGTracker::on_addPlatformButton_clicked()
 // Handler for clicking "new row" button in main gui
 void VGTracker::on_addRow_clicked()
 {
+    if (tableFormat.empty())
+    {
+        errorDialog errordialog;
+        errordialog.setModal(true); //blocks using main window
+        errordialog.setErrorMsg("Select or create a new platform before adding rows!");
+        errordialog.exec();
+        return;
+    }
     this->addEmptyRow(&tableFormat);
     statVals.numItems++;
     updateStatLabel(statVals.numItems, statVals.totalPrice, statVals.numCompleted, statVals.numPlatinumed);

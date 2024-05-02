@@ -16,6 +16,7 @@ public:
     ~errorDialog();
 
     void setErrorMsg(int *errorLoc);
+    void setErrorMsg(QString msg);
 
 private:
     Ui::errorDialog *ui;
