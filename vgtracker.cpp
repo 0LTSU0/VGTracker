@@ -470,6 +470,27 @@ void VGTracker::applyChangesToVector()
     }
 }
 
+bool VGTracker::filterTable(QString search)
+{
+    bool matchFound = false;
+    QString name;
+    for (int row=0; row < ui->tableWidget->rowCount(); row++ )
+    {
+        ui->tableWidget->showRow(row);
+        name = ui->tableWidget->item(row, 1)->text();
+        if (name.contains(search))
+        {
+            matchFound = true;
+        }
+        else
+        {
+            ui->tableWidget->hideRow(row);
+        }
+    }
+
+    return matchFound;
+}
+
 // Handler for clicking "add platform" button in main gui
 void VGTracker::on_addPlatformButton_clicked()
 {
@@ -655,5 +676,23 @@ void VGTracker::on_pushButton_clicked()
 void VGTracker::on_tableWidget_cellPressed(int row, int column)
 {
     currentlyActiveRow = row;
+}
+
+
+void VGTracker::on_searchField_textChanged()
+{
+    bool found = filterTable(ui->searchField->toPlainText());
+    if (!found)
+    {
+        QPalette p = ui->searchField->palette();
+        p.setColor(QPalette::Base, Qt::red);
+        ui->searchField->setPalette(p);
+    }
+    else
+    {
+        QPalette p = ui->searchField->palette();
+        p.setColor(QPalette::Base, Qt::white);
+        ui->searchField->setPalette(p);
+    }
 }
 

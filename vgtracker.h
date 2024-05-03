@@ -37,6 +37,8 @@ private slots:
 
     void on_tableWidget_cellPressed(int row, int column);
 
+    void on_searchField_textChanged();
+
 private:
     Ui::VGTracker *ui;
 
@@ -75,6 +77,7 @@ private:
     void updateStatusMessage(QString);
     void updateStatLabel(int, float, int, int);
     float recalculateTotalPrice();
+    bool filterTable(QString);
 
 public:
     void initUI();
