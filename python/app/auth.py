@@ -1,0 +1,48 @@
+from jose import jwt
+from passlib.context import CryptContext
+from fastapi import Header, HTTPException
+from sqlalchemy.orm import Session
+from .models import User
+from .database import SessionLocal
+
+SECRET = "supersecuresecret"
+ALGORITHM = "HS256"
+
+pwd_context = CryptContext(schemes=["bcrypt"])
+
+
+def hash_password(password):
+    return pwd_context.hash(password)
+
+
+def verify_password(password, hashed):
+    return pwd_context.verify(password, hashed)
+
+
+def create_token(user_id):
+    data = {"user_id": user_id}
+    token = jwt.encode(data, SECRET, algorithm=ALGORITHM)
+    return token
+
+
+def get_current_user(authorization: str = Header()):
+
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401)
+
+    token = authorization.split(" ")[1]
+
+    try:
+        payload = jwt.decode(token, SECRET, algorithms=[ALGORITHM])
+    except:
+        raise HTTPException(status_code=401)
+
+    user_id = payload.get("user_id")
+
+    db = SessionLocal()
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=401)
+
+    return user

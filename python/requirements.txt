@@ -1,0 +1,7 @@
+bcrypt<4
+fastapi
+uvicorn
+sqlalchemy
+passlib[bcrypt]
+python-jose
+jinja2
