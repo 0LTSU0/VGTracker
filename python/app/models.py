@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean, UniqueConstraint
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean, UniqueConstraint, Float
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -49,6 +49,7 @@ class Entry(Base):
     series = Column(String)
     cover_path = Column(String)
     platinumed = Column(Boolean)
+    price = Column(Float)
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False) # whose entry this is
     platform_id = Column(Integer, ForeignKey("platforms.id"), nullable=False) # what platform this game is for

@@ -1,6 +1,6 @@
 from jose import jwt
 from passlib.context import CryptContext
-from fastapi import Header, HTTPException
+from fastapi import Header, HTTPException, Cookie
 from sqlalchemy.orm import Session
 from .models import User
 from .database import SessionLocal
@@ -25,13 +25,20 @@ def create_token(user_id):
     return token
 
 
-def get_current_user(authorization: str = Header()):
+def check_token(token):
+    try:
+        payload = jwt.decode(token, SECRET, algorithms=[ALGORITHM])
+        user_id = payload.get("user_id")
+        db = SessionLocal()
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return False
+    except:
+        return False
+    return True
 
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401)
 
-    token = authorization.split(" ")[1]
-
+def get_current_user(token: str | None = Cookie(default=None)):
     try:
         payload = jwt.decode(token, SECRET, algorithms=[ALGORITHM])
     except:

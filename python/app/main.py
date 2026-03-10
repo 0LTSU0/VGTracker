@@ -1,12 +1,13 @@
-from fastapi import FastAPI, Depends, HTTPException, Body, FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Depends, HTTPException, Body, FastAPI, Request, Cookie
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+from sqlalchemy import or_, and_
 
 from .database import Base, engine, get_db
 from .models import User, Entry, Platform
-from .auth import hash_password, verify_password, create_token, get_current_user
+from .auth import hash_password, verify_password, create_token, get_current_user, check_token
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -18,14 +19,14 @@ Base.metadata.create_all(bind=engine)
 
 # MARK: API endpoints
 
-@app.post("/register")
+@app.post("/api/register")
 def register(
     email: str = Body(),
     username: str = Body(),
     password: str = Body(),
     db: Session = Depends(get_db)
 ):
-    existing = db.query(User).filter(User.email == email or User.username == username).first()
+    existing = db.query(User).filter(or_(User.email == email, User.username == username)).first()
 
     if existing:
         raise HTTPException(400, "User/Email already registered")
@@ -43,26 +44,41 @@ def register(
     return {"message": "user created"}
 
 
-@app.post("/login")
+@app.post("/api/login")
 def login(
-    email: str = Body(),
-    username: str = Body(),
+    email: str = Body(None),
     password: str = Body(),
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.email == email or User.username == username).first()
+    user = db.query(User).filter(
+        or_(User.email == email, User.username == email)
+    ).first()
 
-    if not user:
-        raise HTTPException(401, "Invalid credentials")
-
-    if not verify_password(password, user.password_hash):
+    if not user or not verify_password(password, user.password_hash):
         raise HTTPException(401, "Invalid credentials")
 
     token = create_token(user.id)
-    return {"access_token": token}
+
+    response = JSONResponse({"status": "ok"})
+
+    response.set_cookie(
+        key="token",
+        value=token
+        #httponly=True,
+        #samesite="lax"
+    )
+
+    return response
 
 
-@app.post("/entries")
+@app.get("/logout")
+def logout():
+    response = RedirectResponse("/login")
+    response.delete_cookie("token")
+    return response
+
+
+@app.post("/api/entries")
 def create_entry(
     data: dict = Body(),
     user = Depends(get_current_user),
@@ -88,7 +104,7 @@ def create_entry(
     return entry.__dict__
 
 
-@app.get("/entries")
+@app.get("/api/entries")
 def list_entries(
     user = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -100,7 +116,7 @@ def list_entries(
     return [x.__dict__ for x in entries]
 
 
-@app.post("/platforms")
+@app.post("/api/platforms")
 def create_platform(
     data: dict = Body(),
     user = Depends(get_current_user),
@@ -118,7 +134,7 @@ def create_platform(
     return platform.__dict__
 
 
-@app.get("/platforms")
+@app.get("/api/platforms")
 def list_entries(
     user = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -130,6 +146,19 @@ def list_entries(
 
 
 # MARK: HTML endpoints
+@app.get("/")
+def root(token: str | None = Cookie(default=None)):
+    if not token:
+        return RedirectResponse("/login")
+    try:
+        success = check_token(token)
+        if not success:
+            return RedirectResponse("/login") 
+    except:
+        return RedirectResponse("/login")
+    return RedirectResponse("/home")
+
+
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
@@ -140,7 +169,7 @@ def register_page(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
 
 
-@app.get("/dashboard", response_class=HTMLResponse)
-def dashboard_page(request: Request):
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+@app.get("/home", response_class=HTMLResponse)
+def home_page(request: Request, user = Depends(get_current_user)):
+    return templates.TemplateResponse("home.html", {"request": request})
 
