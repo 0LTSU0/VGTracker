@@ -142,6 +142,30 @@ def update_entry(
     return entry.__dict__
 
 
+@app.delete("/api/entries/{entry_id}")
+def delete_entry(
+    entry_id: int,
+    user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    entry = db.query(Entry).filter(
+        Entry.id == entry_id,
+        Entry.user_id == user.id
+    ).first()
+
+    if not entry:
+        raise HTTPException(404, "Entry not found")
+
+    try:
+        db.delete(entry)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(406, str(e))
+
+    return {"status": "deleted"}
+
+
 @app.get("/api/entries")
 def list_entries(
     platform_id: int | None = Query(default=None),

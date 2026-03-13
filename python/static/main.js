@@ -36,8 +36,11 @@ async function loadEntries(platform_id){
     }
     const res = await fetch(url, {})
     const entries = await res.json()
-    document.getElementById("num_games").textContent = String(entries.length)
-
+    if (!platform_id) {
+        // Only update when were fetching all
+        document.getElementById("num_games").textContent = String(entries.length)
+    }
+    
     const table = document.getElementById("entriesTable")
     table.innerHTML = ""
     entries.forEach(e => {
@@ -178,6 +181,10 @@ function updateDetailModalContent(entry) {
     document.getElementById("details_modal_genres").value = entry.genres
     document.getElementById("details_modal_notes").value = entry.notes
     document.getElementById("details_modal_entry_id").value = entry.id
+
+    if (entry.id) {
+        document.getElementById("details_modal_delete_entry").removeAttribute("disabled")
+    }
 }
 
 function newEntry() {
@@ -198,6 +205,24 @@ function newEntry() {
     document.getElementById("details_modal_genres").value = null
     document.getElementById("details_modal_notes").value = null
     document.getElementById("details_modal").classList.add("is-active")
+
+    document.getElementById("details_modal_delete_entry").setAttribute("disabled", true)
+}
+
+async function deleteEntry() {
+    let id = document.getElementById("details_modal_entry_id").value
+    if (!id) {
+        console.log("no value in details_modal_entry_id. Cannot delete")
+        return
+    }
+    if (!confirm("Delete this entry?")) return
+
+    await fetch(`/api/entries/${id}`, {
+        method: "DELETE"
+    })
+
+    closeDetailsModal()
+    loadEntries()
 }
 
 function openDetailsModal(entry) {
@@ -212,6 +237,10 @@ function closeDetailsModal() {
 
 async function detailsModalSaveChanges() {
     await postEntryObj()
+}
+
+function logout() {
+    window.location = "/logout"
 }
 
 async function init() {

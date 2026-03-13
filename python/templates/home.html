@@ -11,13 +11,23 @@
     <body>
         <section class="section">
             <div class="container">
-                <h1 class="title">
-                    My collection
-                </h1>
-                <p class="subtitle">
-                    <strong id="num_games">X</strong> games for <strong id="num_platforms">Y</strong> platform(s)!
-                </p>
+                <div class="columns">
+                    <div class="column is-wide">
+                        <div class="container">
+                            <h1 class="title">
+                                My collection
+                            </h1>
+                            <p class="subtitle">
+                                <strong id="num_games">X</strong> games for <strong id="num_platforms">Y</strong> platform(s)!
+                            </p>
+                        </div>
+                    </div>
+                    <div class="column is-narrow">
+                        <button class="button is-text" onclick="logout()">Log out</button>
+                    </div>
+                </div>
             </div>
+            
         </section>
 
         <section class="section">
@@ -235,10 +245,14 @@
 
                 </section>
                 <footer class="modal-card-foot">
-                    <div class="buttons">
-                        <button class="button is-success" onclick="detailsModalSaveChanges()">Save changes</button>
-                        <button class="button" onclick="closeDetailsModal()">Cancel</button>
-                    </div>
+                  <!-- LEFT SIDE -->
+                  <button id="details_modal_delete_entry" class="button is-danger" onclick="deleteEntry()">Delete</button>
+
+                  <!-- RIGHT SIDE -->
+                  <div class="buttons" style="margin-left:auto">
+                      <button class="button is-success" onclick="detailsModalSaveChanges()">Save changes</button>
+                      <button class="button" onclick="closeDetailsModal()">Cancel</button>
+                  </div>
                 </footer>
             </div>
         </div>
