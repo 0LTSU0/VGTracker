@@ -127,6 +127,11 @@ async function postEntryObj(){
     if (hidden_id_field.value) {
         eObj["id"] = hidden_id_field.value
         console.log("Doing update since hidden id field has value", eObj)
+        res = await fetch("/api/entries",{
+            method:"PUT",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify(eObj)
+        })
     } else {
         console.log("Creting new entry", eObj)
         res = await fetch("/api/entries",{

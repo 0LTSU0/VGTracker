@@ -3,3 +3,4 @@ python/app/__pycache__/
 python/vgtracker.db
 python/covers/*
 !python/covers/.gitkeep
+!python/covers/placeholder.png

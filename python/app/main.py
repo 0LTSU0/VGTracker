@@ -105,6 +105,43 @@ def create_entry(
     return entry.__dict__
 
 
+@app.put("/api/entries")
+def update_entry(
+    data: dict = Body(),
+    user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    entry_id = data.get("id")
+    if not entry_id:
+        raise HTTPException(406, "Missing entry id in put request")
+    
+    entry = db.query(Entry).filter(
+        Entry.id == entry_id,
+        Entry.user_id == user.id
+    ).first()
+    if not entry:
+        raise HTTPException(404, "Corresponding entry not found in DB")
+    
+    if "platform_id" in data:
+        platform = db.query(Platform).filter(
+            Platform.id == data["platform_id"],
+            Platform.user_id == user.id
+        ).first()
+        if not platform:
+            raise HTTPException(406, "No such platform")
+        
+    for key, value in data.items():
+        setattr(entry, key, value)
+    try:
+        db.commit()
+        db.refresh(entry)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(406, str(e))
+        
+    return entry.__dict__
+
+
 @app.get("/api/entries")
 def list_entries(
     platform_id: int | None = Query(default=None),
