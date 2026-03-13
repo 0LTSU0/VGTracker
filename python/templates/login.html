@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login</title>
+</head>
+<body>
+
+<h2>Login</h2>
+
+<input id="email" placeholder="Email or username"><br>
+<input id="password" type="password" placeholder="Password"><br>
+<br>
+<button onclick="login()">Login</button> &nbsp; <button onclick="register()">Create new account</button>
+<br>
+<a id="invalid_credentials", style="display: none;">Invalid credentials</a>
+
+<script>
+async function login(){
+
+    const res = await fetch("/api/login",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            email:document.getElementById("email").value,
+            password:document.getElementById("password").value
+        })
+    })
+
+    const resp = await res
+    if (resp.status == 200) {
+        let js = await resp.json()
+        localStorage.setItem("user_id", js.user_id)
+        window.location="/home"
+    } else {
+        let js = await resp.json()
+        document.getElementById("invalid_credentials").style.display = "block"
+        document.getElementById("invalid_credentials").textContent = js["detail"]
+    }
+    
+}
+
+function register() {
+    window.location = "/register";
+}
+</script>
+
+</body>
+</html>

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Body, FastAPI, Request, Cookie
+from fastapi import FastAPI, Depends, HTTPException, Body, FastAPI, Request, Cookie, Query
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -13,6 +13,7 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 app.mount("/covers", StaticFiles(directory="covers"), name="covers")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 Base.metadata.create_all(bind=engine)
 
@@ -59,7 +60,7 @@ def login(
 
     token = create_token(user.id)
 
-    response = JSONResponse({"status": "ok"})
+    response = JSONResponse({"status": "ok", "user_id": user.id})
 
     response.set_cookie(
         key="token",
@@ -106,13 +107,18 @@ def create_entry(
 
 @app.get("/api/entries")
 def list_entries(
+    platform_id: int | None = Query(default=None),
     user = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    entries = db.query(Entry).filter(
+    query = db.query(Entry).filter(
         Entry.user_id == user.id
-    ).all()
+    )
 
+    if platform_id is not None:
+        query = query.filter(Entry.platform_id == platform_id)
+
+    entries = query.all()
     return [x.__dict__ for x in entries]
 
 

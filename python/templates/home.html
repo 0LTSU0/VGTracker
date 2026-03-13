@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Collection</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    </head>
+    
+    
+    <body>
+        <section class="section">
+            <div class="container">
+                <h1 class="title">
+                    My collection
+                </h1>
+                <p class="subtitle">
+                    <strong id="num_games">X</strong> games for <strong id="num_platforms">Y</strong> platform(s)!
+                </p>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <div class="columns">
+                    <div class="column is-wide">
+                        <div class="dropdown" id="platformDropdown">
+                          <div class="dropdown-trigger">
+                            <button class="button" onclick="toggleDropdown()">
+                              <span id="dropdownLabel">Select Platform</span>
+                              <span class="icon is-small">
+                                ▼
+                              </span>
+                            </button>
+                          </div>
+                      
+                          <div class="dropdown-menu">
+                            <div class="dropdown-content" id="platformOptions">
+                              <!-- JS will insert items here -->
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+                    <div class="column is-narrow">
+                        <button class="button">Add platform</button>&nbsp;
+                        <button class="button is-primary" onclick="newEntry()">Add game</button>
+                    </div>
+                    <!--div class="column">
+                        
+                    </div-->
+                </div>
+            </div>
+            <br>
+            <div class="container">
+                <table class="table is-fullwidth is-hoverable">
+                    <thead>
+                        <tr>
+                          <th>Cover</th>
+                          <th>Title</th>
+                          <th><abbr title="Not started, In progress, Completed">Status</abbr></th>
+                          <th>Platinum</th>
+                          <th>Platform</th>
+                          <th>Details/Edit</th>
+                        </tr>
+                    </thead>
+                    <tbody id="entriesTable">
+                        <!-- JS will insert items here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="modal" id="details_modal">
+            <div class="modal-background"></div>
+            <div class="modal-card">
+                <header class="modal-card-head">
+                    <p class="modal-card-title" id="details_modal_title_header">Modal title</p>
+                    <button class="delete" aria-label="close" onclick="closeDetailsModal()"></button>
+                </header>
+                <section class="modal-card-body">
+                    <!--ROW 1-->
+                    <div class="columns">
+                        <div class="column is-3">
+                            <figure class="image is-3by4">
+                                <img src="/covers/placeholder.png" id="details_modal_cover_img">
+                            </figure>
+                        </div>
+                        <div class="column">
+
+                            <!-- Title -->
+                            <div class="field">
+                              <label class="label">Title</label>
+                              <div class="control">
+                                <input id="details_modal_title" class="input" oninput="updateTitle(this.value)">
+                              </div>
+                            </div>
+                        
+                            <!-- Series + Platform -->
+                            <div class="columns">
+                              <div class="column">
+                                <div class="field">
+                                  <label class="label">Series</label>
+                                  <div class="control">
+                                    <input id="details_modal_series" class="input">
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="column">
+                                <div class="field">
+                                  <label class="label">Platform</label>
+                                  <div class="control">
+                                    <div class="select is-fullwidth">
+                                      <select id="details_modal_platform"></select>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2 -->
+                    <div class="columns">
+                    
+                      <div class="column">
+                        <label class="label">Status</label>
+                        <div class="select is-fullwidth">
+                          <select id="details_modal_status">
+                            <option>Not Started</option>
+                            <option>In Progress</option>
+                            <option>Completed</option>
+                          </select>
+                        </div>
+                      </div>
+                  
+                      <div class="column">
+                        <div class="field">
+                            <label class="label">Platinum</label>
+                            <div class="select is-fullwidth">
+                            <select id="details_modal_platinum">
+                              <option>Yes</option>
+                              <option>No</option>
+                            </select>
+                        </div>
+                        </div>
+                      </div>
+                  
+                      <div class="column">
+                        <div class="field">
+                          <label class="label">Price Paid</label>
+                    
+                          <div class="field has-addons">
+                            <div class="control is-expanded">
+                              <input
+                                id="details_modal_price"
+                                type="number"
+                                class="input"
+                                step="0.01"
+                                min="0"
+                              >
+                            
+                            </div>
+                            <div class="control">
+                              <span class="button is-static">€</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                  
+                    </div>
+
+                    <!-- Row 3 -->
+                    <div class="columns">
+                    
+                      <div class="column">
+                        <label class="label">Developer</label>
+                        <input id="details_modal_developer" class="input">
+                      </div>
+                  
+                      <div class="column">
+                        <label class="label">Release Year</label>
+                        <input type="number" id="details_modal_release_year" class="input">
+                      </div>
+                  
+                      <div class="column">
+                        <div class="field">
+                          <label class="label">Rating</label>
+                    
+                          <div class="field has-addons">
+                            <div class="control is-expanded">
+                              <input
+                                id="details_modal_rating"
+                                type="number"
+                                class="input"
+                                min="0"
+                                max="5"
+                                step="0.1"
+                                placeholder="0.0"
+                              >
+                            </div>
+                        
+                            <div class="control">
+                              <span class="button is-static">/5</span>
+                            </div>
+                          </div>
+                        </div>
+                      
+                      </div>
+                  
+                    </div>
+
+                    <!-- Row 4 -->
+                    <div class="columns">
+                    
+                      <div class="column">
+                        <label class="label">Publisher</label>
+                        <input id="details_modal_publisher" class="input">
+                      </div>
+                  
+                      <div class="column">
+                        <label class="label">Genre(s)</label>
+                        <input id="details_modal_genres" class="input">
+                      </div>
+                  
+                    </div>
+                
+                    <!-- Notes -->
+                    <div class="field">
+                      <label class="label">Notes</label>
+                      <textarea id="details_modal_notes" class="textarea"></textarea>
+                    </div>
+                    
+                    <!--Hidden dummy input to hold game id-->
+                    <input type="hidden" id="details_modal_entry_id">
+
+                </section>
+                <footer class="modal-card-foot">
+                    <div class="buttons">
+                        <button class="button is-success" onclick="detailsModalSaveChanges()">Save changes</button>
+                        <button class="button" onclick="closeDetailsModal()">Cancel</button>
+                    </div>
+                </footer>
+            </div>
+        </div>
+
+    <script src="/static/main.js"></script>
+    </body>
+
+    
+
+</html>
