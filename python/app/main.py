@@ -1,5 +1,7 @@
+import os
+
 from fastapi import FastAPI, Depends, HTTPException, Body, FastAPI, Request, Cookie, Query
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -12,7 +14,7 @@ from .auth import hash_password, verify_password, create_token, get_current_user
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-app.mount("/covers", StaticFiles(directory="covers"), name="covers")
+#app.mount("/covers", StaticFiles(directory="covers"), name="covers") Might be useful later when add ability to upload cover image
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 Base.metadata.create_all(bind=engine)
@@ -240,3 +242,10 @@ def register_page(request: Request):
 def home_page(request: Request, user = Depends(get_current_user)):
     return templates.TemplateResponse("home.html", {"request": request})
 
+
+@app.get("/covers/{cover_file}")
+def get_cover(cover_file: str):
+    cover_path = f"covers/{cover_file}"
+    if os.path.isfile(cover_path):
+        return FileResponse(cover_path, media_type="image/png")
+    return FileResponse("covers/placeholder.png", media_type="image/png")

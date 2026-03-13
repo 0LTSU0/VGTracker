@@ -4,3 +4,4 @@ python/vgtracker.db
 python/covers/*
 !python/covers/.gitkeep
 !python/covers/placeholder.png
+python/igdb.json

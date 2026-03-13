@@ -55,7 +55,9 @@ async function loadEntries(platform_id){
         const button_id = "details_button_details_" + e.id
         row.innerHTML = `
             <td>
-                N/A
+                <figure class="image is-3by4 is-64x64">
+                    <img src="/covers/${e.id}.png" id="details_modal_cover_img" style="height: 64px; width: 48px" />
+                </figure>
             </td>
             <td>${e.title}</td>
             <td>${e.status || ""}</td>
