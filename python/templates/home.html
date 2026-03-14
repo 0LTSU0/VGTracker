@@ -52,7 +52,7 @@
                         </div>
                     </div>
                     <div class="column is-narrow">
-                        <button class="button">Add platform</button>&nbsp;
+                        <button class="button" onclick="openPlatformModal()">Add platform</button>&nbsp;
                         <button class="button is-primary" onclick="newEntry()">Add game</button>
                     </div>
                     <!--div class="column">
@@ -283,6 +283,66 @@
                 </footer>
             </div>
         </div>
+
+        <div id="platformModal" class="modal">
+  <div class="modal-background" onclick="closePlatformModal()"></div>
+
+  <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Add Platform</p>
+          <button class="delete" aria-label="close" onclick="closePlatformModal()"></button>
+        </header>
+
+        <section class="modal-card-body">
+
+          <!-- Platform Name -->
+          <div class="field">
+            <label class="label">Platform Name</label>
+            <div class="control">
+              <input
+                id="platform_modal_name"
+                class="input"
+                type="text"
+                placeholder="e.g. PlayStation 5"
+              >
+            </div>
+          </div>
+
+          <!-- Supports Platinum -->
+          <div class="field">
+            <label class="label">Supports Platinum</label>
+
+            <div class="control">
+              <label class="checkbox" style="display:flex; align-items:center; gap:0.75rem;">
+                &nbsp;
+                <input
+                  id="platform_modal_supports_platinum"
+                  type="checkbox"
+                  style="transform: scale(1.4);"
+                >
+                This platform supports platinum trophies
+              </label>
+            </div>
+          </div>
+
+        </section>
+
+        <footer class="modal-card-foot">
+
+          <div class="buttons">
+            <button class="button is-success" onclick="savePlatform()">
+              Save
+            </button>
+
+            <button class="button" onclick="closePlatformModal()">
+              Cancel
+            </button>
+          </div>
+
+        </footer>
+
+      </div>
+    </div>
 
     <div id="loadingOverlay" style="
         position:fixed;

@@ -6,6 +6,7 @@ async function getPlatforms(){
     const platforms = await res.json()
     document.getElementById("num_platforms").textContent = String(platforms.length)
     const container = document.getElementById("platformOptions")
+    container.innerHTML = ""
     const modal_container = document.getElementById("details_modal_platform")
     platforms.forEach(p => {
         const a = document.createElement("a")
@@ -268,6 +269,33 @@ async function detailsModalSaveChanges() {
 
 function logout() {
     window.location = "/logout"
+}
+
+function openPlatformModal() {
+    document.getElementById("platformModal").classList.add("is-active")
+}
+
+function closePlatformModal() {
+    document.getElementById("platformModal").classList.remove("is-active")
+}
+
+async function savePlatform() {
+    const name = document.getElementById("platform_modal_name").value
+    const supports_platinum =
+        document.getElementById("platform_modal_supports_platinum").checked
+
+    let res = await fetch("/api/platforms",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({"name": name, "supports_platinum": supports_platinum})
+    })
+    if (res.status == 200) {
+        let js = await res.json()
+        loadEntries(js.id)
+        closePlatformModal()
+        document.getElementById("dropdownLabel").innerText = js.name
+        getPlatforms()
+    }
 }
 
 
