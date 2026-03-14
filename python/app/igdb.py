@@ -10,6 +10,7 @@ IGDB_TOKEN = None
 IGDB_HEADER = {"Client-ID": None, "Authorization": None}
 
 async def do_request(url, query, is_retry=False, return_only_first=False):
+    print("do_request called with", url, query)
     async with httpx.AsyncClient() as client:
         res = await client.post(
             url,
@@ -137,4 +138,70 @@ async def igdb_getgame(id: int):
         "genres": genres,
         "release_year": rel_year,
         "name": full_game_entry.get("name")
+    }
+
+
+@router.get("/igdb/getgame_v2")
+async def igdb_getgame_v2(id: int):
+    query = f"""
+    fields
+        name,
+        first_release_date,
+        collections.name,
+        genres.name,
+        involved_companies.developer,
+        involved_companies.publisher,
+        involved_companies.company.name;
+    where id = {id};
+    """
+
+    game = await do_request(
+        "https://api.igdb.com/v4/games",
+        query,
+        return_only_first=True
+    )
+
+    # series
+    series = "N/A"
+    if game.get("collections"):
+        series = ", ".join(c["name"] for c in game["collections"] if c.get("name"))
+
+    # genres
+    genres = "N/A"
+    if game.get("genres"):
+        genres = ", ".join(g["name"] for g in game["genres"] if g.get("name"))
+
+    # developers / publishers
+    developers = []
+    publishers = []
+
+    for ic in game.get("involved_companies", []):
+        company = ic.get("company", {})
+        name = company.get("name")
+
+        if not name:
+            continue
+
+        if ic.get("developer"):
+            developers.append(name)
+
+        if ic.get("publisher"):
+            publishers.append(name)
+
+    developers = ", ".join(developers) if developers else "N/A"
+    publishers = ", ".join(publishers) if publishers else "N/A"
+
+    rel_year = None
+    if game.get("first_release_date"):
+        rel_year = datetime.fromtimestamp(
+            game["first_release_date"]
+        ).year
+
+    return {
+        "developer": developers,
+        "publisher": publishers,
+        "series": series,
+        "genres": genres,
+        "release_year": rel_year,
+        "name": game.get("name")
     }

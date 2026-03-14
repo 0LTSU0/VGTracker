@@ -306,11 +306,21 @@ async function searchIGDB() {
 
 async function selectIGDBGame(game) {
     console.log("selectIGDBgame", game)
+    makePageLoading()
     document.getElementById("igdbSuggestions").style.display = "none"
-    const res = await fetch(`/api/igdb/getgame?id=${game.id}`)
+    const res = await fetch(`/api/igdb/getgame_v2?id=${game.id}`)
     if (res.status == 200) {
         updateDetailModalContentIGDB(await res.json())
     }
+    hidePageLoading()
+}
+
+
+function makePageLoading() {
+    document.getElementById("loadingOverlay").style.display = "flex"
+}
+function hidePageLoading() {
+    document.getElementById("loadingOverlay").style.display = "none"
 }
 
 
