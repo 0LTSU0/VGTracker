@@ -100,8 +100,35 @@
                             <!-- Title -->
                             <div class="field">
                               <label class="label">Title</label>
-                              <div class="control">
-                                <input id="details_modal_title" class="input" oninput="updateTitle(this.value)">
+
+                              <div class="field has-addons">
+                                <div class="control is-expanded" style="position:relative" id="details_modal_title_control">
+                                
+                                  <input
+                                    id="details_modal_title"
+                                    class="input"
+                                    oninput="updateTitle(this.value)"
+                                    placeholder="Game title"
+                                  >
+                                
+                                  <!-- suggestion dropdown -->
+                                  <div id="igdbSuggestions" class="box" style="
+                                      position:absolute;
+                                      width:100%;
+                                      z-index:30;
+                                      display:none;
+                                      max-height:300px;
+                                      overflow-y:auto;
+                                  ">
+                                  </div>
+                              
+                                </div>
+                            
+                                <div class="control">
+                                  <button class="button" onclick="searchIGDB()">
+                                    <span class="icon">🔍</span>
+                                  </button>
+                                </div>
                               </div>
                             </div>
                         

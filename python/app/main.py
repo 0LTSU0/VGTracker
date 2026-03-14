@@ -10,12 +10,15 @@ from sqlalchemy import or_, and_
 from .database import Base, engine, get_db
 from .models import User, Entry, Platform
 from .auth import hash_password, verify_password, create_token, get_current_user, check_token
+from .igdb import router as igdb_router
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 #app.mount("/covers", StaticFiles(directory="covers"), name="covers") Might be useful later when add ability to upload cover image
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+app.include_router(igdb_router, prefix="/api")
 
 Base.metadata.create_all(bind=engine)
 

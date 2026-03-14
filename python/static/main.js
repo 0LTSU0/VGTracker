@@ -160,6 +160,7 @@ function updateTitle(val) {
 
 function updateDetailModalContent(entry) {
     console.log("Updating modal content for", entry)
+    document.getElementById("igdbSuggestions").innerHTML = "" // clear old igdb search result
     document.getElementById("details_modal_title_header").innerText = entry.title
     document.getElementById("details_modal_title").value = entry.title
     document.getElementById("details_modal_series").value = entry.series
@@ -190,6 +191,7 @@ function updateDetailModalContent(entry) {
 }
 
 function newEntry() {
+    document.getElementById("igdbSuggestions").innerHTML = ""  // clear old igdb search result
     document.getElementById("details_modal_title_header").innerText = "New entry"
     document.getElementById("details_modal_title").value = null
     document.getElementById("details_modal_series").value = null
@@ -209,6 +211,28 @@ function newEntry() {
     document.getElementById("details_modal").classList.add("is-active")
 
     document.getElementById("details_modal_delete_entry").setAttribute("disabled", true)
+}
+
+function updateDetailModalContentIGDB(item) {
+    /* 
+    python response filled fields are
+    return {
+        "developer": developers,
+        "publisher": publishers,
+        "series": series,
+        "genres": genres,
+        "release_year": rel_year,
+        "name": full_game_entry.get("name")
+    }
+    */
+    document.getElementById("igdbSuggestions").innerHTML = ""  // clear old igdb search result
+    document.getElementById("details_modal_title_header").innerText = item.name
+    document.getElementById("details_modal_title").value = item.name
+    document.getElementById("details_modal_developer").value = item.developer
+    document.getElementById("details_modal_publisher").value = item.publisher
+    document.getElementById("details_modal_series").value = item.series
+    document.getElementById("details_modal_genres").value = item.genres
+    document.getElementById("details_modal_release_year").value = item.release_year
 }
 
 async function deleteEntry() {
@@ -235,6 +259,7 @@ function openDetailsModal(entry) {
 
 function closeDetailsModal() {
     document.getElementById("details_modal").classList.remove("is-active")
+    document.getElementById("igdbSuggestions").style.display = "none"
 }
 
 async function detailsModalSaveChanges() {
@@ -245,6 +270,51 @@ function logout() {
     window.location = "/logout"
 }
 
+
+//MARK: IGDB INTEGRATION
+async function searchIGDB() {
+    const title = document.getElementById("details_modal_title").value
+    if (!title) return
+
+    document.getElementById("details_modal_title_control").classList.add("is-loading")
+
+    const res = await fetch(`/api/igdb/search?name=${encodeURIComponent(title)}`)
+    const results = await res.json()
+
+    const box = document.getElementById("igdbSuggestions")
+    box.innerHTML = ""
+    box.style.display = "block"
+    results.forEach(game => {
+
+        const year = game.first_release_date
+            ? new Date(game.first_release_date * 1000).getFullYear()
+            : "?"
+
+        const item = document.createElement("div")
+        item.className = "dropdown-item"
+        item.style.cursor = "pointer"
+
+        item.textContent = `${game.name} (${year})`
+
+        item.onclick = () => selectIGDBGame(game)
+
+        box.appendChild(item)
+    })
+    document.getElementById("details_modal_title_control").classList.remove("is-loading")
+}
+
+
+async function selectIGDBGame(game) {
+    console.log("selectIGDBgame", game)
+    document.getElementById("igdbSuggestions").style.display = "none"
+    const res = await fetch(`/api/igdb/getgame?id=${game.id}`)
+    if (res.status == 200) {
+        updateDetailModalContentIGDB(await res.json())
+    }
+}
+
+
+//MARK: init
 async function init() {
     await getPlatforms() // we need to make sure this finished before loading entries so they have platform map available
     await loadEntries()
