@@ -1,6 +1,7 @@
 
 import httpx
-import os, json, time
+import os, json, time, io
+from PIL import Image
 from datetime import datetime
 from fastapi import APIRouter
 
@@ -147,6 +148,7 @@ async def igdb_getgame_v2(id: int):
     fields
         name,
         first_release_date,
+        cover.image_id,
         collections.name,
         genres.name,
         involved_companies.developer,
@@ -197,11 +199,27 @@ async def igdb_getgame_v2(id: int):
             game["first_release_date"]
         ).year
 
+    cover_temp_key = None
+    if game.get("cover", {}).get("image_id"):
+        image_id = game["cover"]["image_id"]
+        cover_url = f"https://images.igdb.com/igdb/image/upload/t_cover_big/{image_id}.jpg"
+        try:
+            async with httpx.AsyncClient() as client:
+                cover_res = await client.get(cover_url)
+            if cover_res.status_code == 200:
+                img = Image.open(io.BytesIO(cover_res.content))
+                os.makedirs("covers", exist_ok=True)
+                img.save(f"covers/temp_{id}.png", format="PNG")
+                cover_temp_key = str(id)
+        except Exception as e:
+            print("Failed to download IGDB cover", e)
+
     return {
         "developer": developers,
         "publisher": publishers,
         "series": series,
         "genres": genres,
         "release_year": rel_year,
-        "name": game.get("name")
+        "name": game.get("name"),
+        "cover_temp_key": cover_temp_key
     }

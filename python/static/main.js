@@ -1,5 +1,6 @@
 
 let _platforms = {}
+let _pendingTempCoverKey = null
 
 async function getPlatforms(){
     const res = await fetch("/api/platforms", {})
@@ -57,7 +58,7 @@ async function loadEntries(platform_id){
         row.innerHTML = `
             <td>
                 <figure class="image is-3by4 is-64x64">
-                    <img src="/covers/${e.id}.png" id="details_modal_cover_img" style="height: 64px; width: 48px" />
+                    <img src="/covers/${e.id}.png" id="thumbnail_${e.id}" style="height: 64px; width: 48px" />
                 </figure>
             </td>
             <td>${e.title}</td>
@@ -147,6 +148,12 @@ async function postEntryObj(){
         })
     }
     if (res.status == 200) {
+        const saved = await res.json()
+        const savedId = saved.id
+        if (_pendingTempCoverKey && savedId) {
+            await fetch(`/api/entries/${savedId}/cover/from_temp?key=${_pendingTempCoverKey}`, { method: "POST" })
+            _pendingTempCoverKey = null
+        }
         loadEntries(eObj.platform_id)
         closeDetailsModal()
     } else {
@@ -188,6 +195,8 @@ function updateDetailModalContent(entry) {
 
     if (entry.id) {
         document.getElementById("details_modal_delete_entry").removeAttribute("disabled")
+        const img = document.getElementById("details_modal_cover_img")
+        img.src = `/covers/${entry.id}.png`
     }
 }
 
@@ -210,8 +219,11 @@ function newEntry() {
     document.getElementById("details_modal_genres").value = null
     document.getElementById("details_modal_notes").value = null
     document.getElementById("details_modal").classList.add("is-active")
+    document.getElementById("details_modal_entry_id").value = null
 
     document.getElementById("details_modal_delete_entry").setAttribute("disabled", true)
+    const img = document.getElementById("details_modal_cover_img")
+    img.src = `/covers/placeholder.png`
 }
 
 function updateDetailModalContentIGDB(item) {
@@ -234,6 +246,11 @@ function updateDetailModalContentIGDB(item) {
     document.getElementById("details_modal_series").value = item.series
     document.getElementById("details_modal_genres").value = item.genres
     document.getElementById("details_modal_release_year").value = item.release_year
+
+    _pendingTempCoverKey = item.cover_temp_key || null
+    if (_pendingTempCoverKey) {
+        document.getElementById("details_modal_cover_img").src = `/covers/temp_${_pendingTempCoverKey}.png?t=${Date.now()}`
+    }
 }
 
 async function deleteEntry() {
@@ -261,6 +278,7 @@ function openDetailsModal(entry) {
 function closeDetailsModal() {
     document.getElementById("details_modal").classList.remove("is-active")
     document.getElementById("igdbSuggestions").style.display = "none"
+    _pendingTempCoverKey = null
 }
 
 async function detailsModalSaveChanges() {
@@ -349,6 +367,36 @@ function makePageLoading() {
 }
 function hidePageLoading() {
     document.getElementById("loadingOverlay").style.display = "none"
+}
+
+
+//MARK: COVER UPLOAD
+function openCoverUpload() {
+    const entryId = document.getElementById("details_modal_entry_id").value
+    if (!entryId) {
+        alert("Save the entry before uploading a cover.")
+        return
+    }
+    const input = document.createElement("input")
+    input.type = "file"
+    input.accept = "image/*"
+    input.onchange = async () => {
+        const file = input.files[0]
+        if (!file) return
+        const form = new FormData()
+        form.append("file", file)
+        const res = await fetch(`/api/entries/${entryId}/cover`, {
+            method: "POST",
+            body: form
+        })
+        if (res.ok) {
+            const img = document.getElementById("details_modal_cover_img")
+            img.src = `/covers/${entryId}.png?t=${Date.now()}`
+        } else {
+            alert("Cover upload failed.")
+        }
+    }
+    input.click()
 }
 
 

@@ -1,6 +1,8 @@
 import os
+import io
+from PIL import Image
 
-from fastapi import FastAPI, Depends, HTTPException, Body, FastAPI, Request, Cookie, Query
+from fastapi import FastAPI, Depends, HTTPException, Body, FastAPI, Request, Cookie, Query, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -244,6 +246,49 @@ def register_page(request: Request):
 @app.get("/home", response_class=HTMLResponse)
 def home_page(request: Request, user = Depends(get_current_user)):
     return templates.TemplateResponse("home.html", {"request": request})
+
+
+@app.post("/api/entries/{entry_id}/cover")
+async def upload_cover(
+    entry_id: int,
+    file: UploadFile = File(...),
+    user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    entry = db.query(Entry).filter(
+        Entry.id == entry_id,
+        Entry.user_id == user.id
+    ).first()
+    if not entry:
+        raise HTTPException(404, "Entry not found")
+
+    contents = await file.read()
+    image = Image.open(io.BytesIO(contents))
+    image.save(f"covers/{entry_id}.png", format="PNG")
+
+    return {"status": "ok"}
+
+
+@app.post("/api/entries/{entry_id}/cover/from_temp")
+def commit_temp_cover(
+    entry_id: int,
+    key: str = Query(...),
+    user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    entry = db.query(Entry).filter(
+        Entry.id == entry_id,
+        Entry.user_id == user.id
+    ).first()
+    if not entry:
+        raise HTTPException(404, "Entry not found")
+
+    temp_path = f"covers/temp_{key}.png"
+    if not os.path.isfile(temp_path):
+        raise HTTPException(404, "Temp cover not found")
+
+    os.replace(temp_path, f"covers/{entry_id}.png")
+    return {"status": "ok"}
 
 
 @app.get("/covers/{cover_file}")
