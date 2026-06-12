@@ -7,3 +7,4 @@ python-jose
 jinja2
 httpx
 pillow
+pytest

@@ -26,15 +26,17 @@ def create_token(user_id):
 
 
 def check_token(token):
+    db = SessionLocal()
     try:
         payload = jwt.decode(token, SECRET, algorithms=[ALGORITHM])
         user_id = payload.get("user_id")
-        db = SessionLocal()
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             return False
     except:
         return False
+    finally:
+        db.close()
     return True
 
 
