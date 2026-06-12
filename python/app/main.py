@@ -101,6 +101,9 @@ def create_entry(
     if not any([x.id == entry.platform_id for x in existing_platforms]):
         raise HTTPException(406, "Platform missing or does not exist")
 
+    if not entry.title:
+        raise HTTPException(406, "Title cannot be empty")
+
     try:
         db.add(entry)
         db.commit()
@@ -247,7 +250,11 @@ def register_page(request: Request):
 def home_page(request: Request, user = Depends(get_current_user)):
     return templates.TemplateResponse("home.html", {"request": request})
 
+@app.get("/wishlist", response_class=HTMLResponse)
+def home_page(request: Request, user = Depends(get_current_user)):
+    return templates.TemplateResponse("wishlist.html", {"request": request})
 
+# MARK: coverart endpoints
 @app.post("/api/entries/{entry_id}/cover")
 async def upload_cover(
     entry_id: int,

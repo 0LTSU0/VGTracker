@@ -1,9 +1,9 @@
 
 import httpx
-import os, json, time, io
+import os, json, time, io, calendar
 from PIL import Image
 from datetime import datetime
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 router = APIRouter()
 
@@ -223,3 +223,60 @@ async def igdb_getgame_v2(id: int):
         "name": game.get("name"),
         "cover_temp_key": cover_temp_key
     }
+
+
+@router.get("/igdb/upcoming")
+async def igdb_upcoming(
+    year: int,
+    month: int,
+    min_hypes: int = Query(default=0, ge=0),
+    platform_id: int | None = Query(default=None)
+):
+    global IGDB_TOKEN
+    if not IGDB_TOKEN:
+        await authenticate()
+
+    start_ts = int(datetime(year, month, 1).timestamp())
+    last_day  = calendar.monthrange(year, month)[1]
+    end_ts    = int(datetime(year, month, last_day, 23, 59, 59).timestamp())
+
+    where = [
+        f"first_release_date >= {start_ts}",
+        f"first_release_date <= {end_ts}",
+    ]
+    if min_hypes > 0:
+        where.append(f"hypes >= {min_hypes}")
+    if platform_id is not None:
+        where.append(f"platforms = ({platform_id})")
+
+    where_str = " & ".join(where)
+    PAGE_SIZE = 500
+    games = []
+    offset = 0
+
+    while True:
+        query = f"""
+        fields name, first_release_date, hypes, platforms.name, cover.image_id;
+        where {where_str};
+        sort hypes desc;
+        limit {PAGE_SIZE};
+        offset {offset};
+        """
+        page = await do_request("https://api.igdb.com/v4/games", query) or []
+        games.extend(page)
+        if len(page) < PAGE_SIZE:
+            break
+        offset += PAGE_SIZE
+
+    result = []
+    for g in games:
+        ts = g.get("first_release_date")
+        result.append({
+            "id": g["id"],
+            "name": g.get("name"),
+            "release_date": datetime.fromtimestamp(ts).strftime("%Y-%m-%d") if ts else None,
+            "igdb_hypes": g.get("hypes", 0),
+            "platforms": [p["name"] for p in g.get("platforms", []) if p.get("name")],
+        })
+
+    return result

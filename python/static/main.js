@@ -112,6 +112,12 @@ function selectPlatform(platform){
     }
 }
 
+function entryPostErrorHandler(e)
+{
+    // TODO highlight whatever field is invalid
+    alert(e["detail"])
+}
+
 async function postEntryObj(){
     eObj = {
         "status": document.getElementById("details_modal_status").value,
@@ -159,6 +165,7 @@ async function postEntryObj(){
     } else {
         let error = await res.json()
         console.error("Entry obj post failed", error)
+        entryPostErrorHandler(error);
     }
 }
 

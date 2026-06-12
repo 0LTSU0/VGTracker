@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Upcoming Games</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+        <link rel="stylesheet" href="/static/style.css">
+    </head>
+
+    <body>
+        <section class="section">
+            <div class="container">
+                <div class="columns">
+                    <div class="column is-wide">
+                        <div class="container">
+                            <h1 class="title">Upcoming games</h1>
+                            <p class="subtitle">
+                                You have <strong id="num_games_wishlisted">0</strong> saved!
+                            </p>
+                        </div>
+                    </div>
+                    <div class="column is-narrow">
+                        <a class="button is-rounded" href="/home">My Collection</a>
+                    </div>
+                    <div class="column is-narrow">
+                        <button class="button is-text" onclick="logout()">Log out</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Wishlist list -->
+        <section class="section" style="padding-top:0">
+            <div class="container">
+                <h2 class="subtitle"><strong>My Wishlist</strong></h2>
+                <div class="wishlist-scroll">
+                    <table class="table is-fullwidth is-hoverable">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Platform</th>
+                                <th>Release Date</th>
+                                <th>IGDB Wantlist</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="wishlistTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Calendar -->
+        <section class="section" style="padding-top:0">
+            <div class="container">
+                <h2 class="subtitle"><strong>Release Calendar</strong></h2>
+
+                <!-- Filters -->
+                <div class="columns is-vcentered">
+                    <div class="column is-narrow">
+                        <div class="field has-addons">
+                            <div class="control">
+                                <span class="button is-static is-small">Platform</span>
+                            </div>
+                            <div class="control">
+                                <div class="select is-small">
+                                    <select id="filterPlatform"></select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-narrow">
+                        <div class="field has-addons">
+                            <div class="control">
+                                <span class="button is-static is-small">Min wantlist</span>
+                            </div>
+                            <div class="control">
+                                <input id="filterWantlist" class="input is-small" type="number" min="0" step="100" value="10" style="width:110px">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-narrow">
+                        <label class="checkbox" style="font-size:0.9rem">
+                            <input type="checkbox" id="filterWishlistOnly">
+                            &nbsp;Wishlist only
+                        </label>
+                    </div>
+                    <div class="column has-text-right">
+                        <button class="button is-primary is-small" onclick="applyFilters()">Apply</button>
+                        <button class="button is-small" onclick="resetFilters()" style="margin-left:4px">Reset</button>
+                    </div>
+                </div>
+
+                <!-- Month navigation -->
+                <div class="columns is-vcentered is-mobile" style="margin-bottom:0.5rem">
+                    <div class="column is-narrow">
+                        <button class="button is-small" onclick="prevMonth()">&#9664;</button>
+                    </div>
+                    <div class="column has-text-centered">
+                        <strong id="calendarTitle"></strong>
+                    </div>
+                    <div class="column is-narrow">
+                        <button class="button is-small" onclick="nextMonth()">&#9654;</button>
+                    </div>
+                </div>
+
+                <div class="calendar-grid" id="calendarHeaders"></div>
+                <div style="height:4px"></div>
+                <div class="calendar-grid" id="calendarGrid"></div>
+
+                <p style="margin-top:0.75rem; font-size:0.78rem; color:#888">
+                    ⭐ on your wishlist &nbsp;|&nbsp;
+                    <span style="background:#fffbea;border:1px solid #f4d03f;padding:1px 6px;border-radius:3px">yellow</span> = wishlisted &nbsp;|&nbsp;
+                    <span style="background:#f0f4ff;border:1px solid #c3cff5;padding:1px 6px;border-radius:3px">blue</span> = not wishlisted
+                </p>
+            </div>
+        </section>
+
+        <!--script>
+            // ── Dummy data ────────────────────────────────────────────────────────
+            const WISHLIST_IDS = new Set([1, 3, 5, 10]);
+
+            const ALL_UPCOMING = [
+                { id: 1,  title: "Grand Theft Auto VI",       platform: "PS5",   release_date: "2026-06-14", igdb_wantlist: 2841234 },
+                { id: 2,  title: "Elden Ring: Nightreign",    platform: "PC",    release_date: "2026-06-14", igdb_wantlist: 420000  },
+                { id: 3,  title: "Death Stranding 2",         platform: "PS5",   release_date: "2026-06-26", igdb_wantlist: 312000  },
+                { id: 4,  title: "Monster Hunter Wilds DLC",  platform: "PC",    release_date: "2026-06-20", igdb_wantlist: 87000   },
+                { id: 5,  title: "Hollow Knight: Silksong",   platform: "PC",    release_date: "2026-07-10", igdb_wantlist: 543210  },
+                { id: 6,  title: "Pragmata",                  platform: "PS5",   release_date: "2026-07-03", igdb_wantlist: 95000   },
+                { id: 7,  title: "Fable",                     platform: "Xbox",  release_date: "2026-07-20", igdb_wantlist: 234000  },
+                { id: 8,  title: "Perfect Dark",              platform: "Xbox",  release_date: "2026-07-28", igdb_wantlist: 41000   },
+                { id: 9,  title: "Avowed DLC",                platform: "PC",    release_date: "2026-06-30", igdb_wantlist: 29000   },
+                { id: 10, title: "Bloodborne Remaster",       platform: "PS5",   release_date: "2026-06-18", igdb_wantlist: 1100000 },
+                { id: 11, title: "Starfield: Shattered Space 2", platform: "Xbox", release_date: "2026-07-15", igdb_wantlist: 62000 },
+                { id: 12, title: "Doom: The Dark Ages DLC",   platform: "PC",    release_date: "2026-06-25", igdb_wantlist: 155000  },
+            ];
+
+            // ── State ─────────────────────────────────────────────────────────────
+            const today = new Date();
+            let calYear  = today.getFullYear();
+            let calMonth = today.getMonth();
+            let filtered = [...ALL_UPCOMING];
+
+            // ── Boot ──────────────────────────────────────────────────────────────
+            document.addEventListener("DOMContentLoaded", () => {
+                buildPlatformFilter();
+                renderWishlist();
+                renderCalendar();
+            });
+
+            // ── Wishlist list ─────────────────────────────────────────────────────
+            function renderWishlist() {
+                const items = ALL_UPCOMING.filter(g => WISHLIST_IDS.has(g.id));
+                document.getElementById("num_games_wishlisted").textContent = items.length;
+                document.getElementById("wishlistTable").innerHTML = items.map(g => `
+                    <tr>
+                        <td><strong>${g.title}</strong></td>
+                        <td><span class="tag">${g.platform}</span></td>
+                        <td>${fmtDate(g.release_date)}</td>
+                        <td>${g.igdb_wantlist.toLocaleString()} 🤍</td>
+                        <td>
+                            <button class="button is-small is-danger is-light"
+                                    onclick="removeFromWishlist(${g.id})">Remove</button>
+                        </td>
+                    </tr>
+                `).join("");
+            }
+
+            function removeFromWishlist(id) {
+                WISHLIST_IDS.delete(id);
+                renderWishlist();
+                renderCalendar();
+            }
+
+            // ── Filters ───────────────────────────────────────────────────────────
+            function buildPlatformFilter() {
+                const platforms = ["", ...new Set(ALL_UPCOMING.map(g => g.platform))].sort();
+                const sel = document.getElementById("filterPlatform");
+                sel.innerHTML = platforms.map(p =>
+                    `<option value="${p}">${p || "All platforms"}</option>`
+                ).join("");
+            }
+
+            function applyFilters() {
+                const platform    = document.getElementById("filterPlatform").value;
+                const minWant     = parseInt(document.getElementById("filterWantlist").value) || 0;
+                const wishlistOnly = document.getElementById("filterWishlistOnly").checked;
+                filtered = ALL_UPCOMING.filter(g =>
+                    (!platform     || g.platform === platform) &&
+                    g.igdb_wantlist >= minWant &&
+                    (!wishlistOnly || WISHLIST_IDS.has(g.id))
+                );
+                renderCalendar();
+            }
+
+            function resetFilters() {
+                document.getElementById("filterPlatform").value = "";
+                document.getElementById("filterWantlist").value = "0";
+                document.getElementById("filterWishlistOnly").checked = false;
+                filtered = [...ALL_UPCOMING];
+                renderCalendar();
+            }
+
+            // ── Calendar ──────────────────────────────────────────────────────────
+            const MONTHS   = ["January","February","March","April","May","June",
+                               "July","August","September","October","November","December"];
+            const DAY_HDRS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+            function prevMonth() { if (--calMonth < 0)  { calMonth = 11; calYear--; } renderCalendar(); }
+            function nextMonth() { if (++calMonth > 11) { calMonth = 0;  calYear++; } renderCalendar(); }
+
+            function renderCalendar() {
+                document.getElementById("calendarTitle").textContent = `${MONTHS[calMonth]} ${calYear}`;
+
+                document.getElementById("calendarHeaders").innerHTML =
+                    DAY_HDRS.map(d => `<div class="calendar-day-header">${d}</div>`).join("");
+
+                const daysInMonth  = new Date(calYear, calMonth + 1, 0).getDate();
+                const startOffset  = (new Date(calYear, calMonth, 1).getDay() + 6) % 7; // Mon = 0
+
+                const byDate = {};
+                filtered.forEach(g => {
+                    (byDate[g.release_date] = byDate[g.release_date] || []).push(g);
+                });
+
+                let html = "";
+                for (let i = 0; i < startOffset; i++)
+                    html += `<div class="calendar-day is-filler"></div>`;
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const ds      = `${calYear}-${String(calMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+                    const isToday = d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+                    const chips   = (byDate[ds] || []).map(g => {
+                        const star = WISHLIST_IDS.has(g.id) ? "⭐ " : "";
+                        const cls  = WISHLIST_IDS.has(g.id) ? "wishlisted" : "not-wishlisted";
+                        const lbl  = g.title.length > 17 ? g.title.slice(0, 15) + "…" : g.title;
+                        return `<div class="release-chip ${cls}" title="${g.title} — ${g.platform} (${g.igdb_wantlist.toLocaleString()} wants)">${star}${lbl}</div>`;
+                    }).join("");
+                    html += `<div class="calendar-day${isToday ? " is-today" : ""}">
+                        <div class="calendar-day-num">${d}</div>${chips}</div>`;
+                }
+
+                const tail = (startOffset + daysInMonth) % 7;
+                if (tail) for (let i = 0; i < 7 - tail; i++)
+                    html += `<div class="calendar-day is-filler"></div>`;
+
+                document.getElementById("calendarGrid").innerHTML = html;
+            }
+
+            // ── Helpers ───────────────────────────────────────────────────────────
+            function fmtDate(str) {
+                const [y, m, d] = str.split("-");
+                return `${d}/${m}/${y}`;
+            }
+
+            function logout() {
+                window.location.href = "/logout";
+            }
+        </script-->
+                        
+        <script src="/static/wishlist.js"></script>
+    
+    </body>
+</html>
