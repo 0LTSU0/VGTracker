@@ -11,7 +11,7 @@ IGDB_TOKEN = None
 IGDB_HEADER = {"Client-ID": None, "Authorization": None}
 
 async def do_request(url, query, is_retry=False, return_only_first=False):
-    print("do_request called with", url, query)
+    print("igdb do_request called with", url, query)
     async with httpx.AsyncClient() as client:
         res = await client.post(
             url,

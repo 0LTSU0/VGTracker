@@ -16,8 +16,8 @@ let calMonth = today.getMonth();
 const MONTHS   = ["January","February","March","April","May","June",
                   "July","August","September","October","November","December"];
 const DAY_HDRS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-function prevMonth() { if (--calMonth < 0)  { calMonth = 11; calYear--; } drawCalendar(); }
-function nextMonth() { if (++calMonth > 11) { calMonth = 0;  calYear++; } drawCalendar(); }
+function prevMonth() { if (--calMonth < 0)  { calMonth = 11; calYear--; } drawCalendar(IGDB_PLATFORM_MAP[document.getElementById("filterPlatform").value] ?? null, parseInt(document.getElementById("filterWantlist").value)); }
+function nextMonth() { if (++calMonth > 11) { calMonth = 0;  calYear++; } drawCalendar(IGDB_PLATFORM_MAP[document.getElementById("filterPlatform").value] ?? null, parseInt(document.getElementById("filterWantlist").value)); }
 
 function renderGrid(byDate) {
     const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
