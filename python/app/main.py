@@ -56,6 +56,7 @@ def register(
 def login(
     email: str = Body(None),
     password: str = Body(),
+    token_in_json: bool = False,
     db: Session = Depends(get_db)
 ):
     user = db.query(User).filter(
@@ -66,6 +67,13 @@ def login(
         raise HTTPException(401, "Invalid credentials")
 
     token = create_token(user.id)
+
+    if token_in_json: # this is mostly for the flutter app
+        return {
+            "status": "ok",
+            "user_id": user.id,
+            "token": token,
+        }
 
     response = JSONResponse({"status": "ok", "user_id": user.id})
 
