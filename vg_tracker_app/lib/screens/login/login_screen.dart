@@ -4,9 +4,7 @@ import '../../services/auth_service.dart';
 import '../home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({
-    super.key,
-  });
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -51,11 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => HomeScreen(
-            userId: result.userId,
-          ),
-        ),
+        MaterialPageRoute(builder: (_) => HomeScreen(userId: result.userId)),
       );
     } catch (e) {
       if (!mounted) {
@@ -63,14 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.toString().replaceFirst(
-              'Exception: ',
-              '',
-            ),
-          ),
-        ),
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     } finally {
       if (mounted) {
@@ -91,23 +78,16 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Form(
               key: _formKey,
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    Icons.lock_outline,
-                    size: 80,
-                  ),
+                  const Icon(Icons.lock_outline, size: 80),
 
                   const SizedBox(height: 24),
 
                   const Text(
                     'Welcome Back',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                   ),
 
                   const SizedBox(height: 8),
@@ -115,32 +95,24 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Text(
                     'Login to continue',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(fontSize: 16),
                   ),
 
                   const SizedBox(height: 40),
 
                   TextFormField(
                     controller: _emailController,
-                    keyboardType:
-                        TextInputType.emailAddress,
-                    textInputAction:
-                        TextInputAction.next,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                     autocorrect: false,
                     decoration: const InputDecoration(
                       labelText: 'Email or Username',
-                      hintText:
-                          'Enter your email or username',
-                      prefixIcon: Icon(
-                        Icons.person_outline,
-                      ),
+                      hintText: 'Enter your email or username',
+                      prefixIcon: Icon(Icons.person_outline),
                       border: OutlineInputBorder(),
                     ),
                     validator: (value) {
-                      if (value == null ||
-                          value.trim().isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'Please enter your email or username';
                       }
 
@@ -153,22 +125,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
-                    textInputAction:
-                        TextInputAction.done,
+                    textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _login(),
                     decoration: InputDecoration(
                       labelText: 'Password',
                       hintText: 'Enter your password',
-                      prefixIcon: const Icon(
-                        Icons.lock_outline,
-                      ),
-                      border:
-                          const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
                         onPressed: () {
                           setState(() {
-                            _obscurePassword =
-                                !_obscurePassword;
+                            _obscurePassword = !_obscurePassword;
                           });
                         },
                         icon: Icon(
@@ -179,8 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null ||
-                          value.isEmpty) {
+                      if (value == null || value.isEmpty) {
                         return 'Please enter your password';
                       }
 
@@ -193,21 +159,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(
                     height: 52,
                     child: ElevatedButton(
-                      onPressed:
-                          _isLoading ? null : _login,
+                      onPressed: _isLoading ? null : _login,
                       child: _isLoading
                           ? const SizedBox(
                               height: 24,
                               width: 24,
-                              child:
-                                  CircularProgressIndicator(),
+                              child: CircularProgressIndicator(),
                             )
                           : const Text(
                               'Login',
                               style: TextStyle(
                                 fontSize: 16,
-                                fontWeight:
-                                    FontWeight.bold,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                     ),

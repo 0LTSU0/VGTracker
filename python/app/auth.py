@@ -1,6 +1,7 @@
 from jose import jwt
 from passlib.context import CryptContext
 from fastapi import Header, HTTPException, Cookie, Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 from .models import User
 from .database import SessionLocal, get_db
@@ -9,7 +10,7 @@ SECRET = "supersecuresecret"
 ALGORITHM = "HS256"
 
 pwd_context = CryptContext(schemes=["bcrypt"])
-
+security = HTTPBearer(auto_error=False)
 
 def hash_password(password):
     return pwd_context.hash(password)
@@ -40,7 +41,18 @@ def check_token(token):
     return True
 
 
-def get_current_user(token: str | None = Cookie(default=None), db: Session = Depends(get_db)):
+def get_current_user(
+        creds: HTTPAuthorizationCredentials | None = Depends(security),
+        token: str | None = Cookie(default=None), 
+        db: Session = Depends(get_db)
+    ):
+    
+    if creds is not None: # check for bearer token
+        token = creds.credentials
+
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
     try:
         payload = jwt.decode(token, SECRET, algorithms=[ALGORITHM])
     except:

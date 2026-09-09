@@ -94,6 +94,19 @@ def logout():
     return response
 
 
+@app.get("/api/profile")
+def get_user_profile(
+    user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user_details = db.query(User).filter(User.id == user.id).first()
+    return {
+        "id": user_details.id,
+        "username": user_details.username,
+        "email": user_details.email
+    }
+
+
 @app.post("/api/entries")
 def create_entry(
     data: dict = Body(),

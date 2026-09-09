@@ -19,6 +19,7 @@ class AuthService {
         'email': email,
         'password': password,
       },
+      authenticated: false,
     );
 
     final data = jsonDecode(response.body);
