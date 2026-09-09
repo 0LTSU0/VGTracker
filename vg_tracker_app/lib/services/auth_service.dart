@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../config/api_config.dart';
 import '../models/login_response.dart';
 import 'api_service.dart';
+import 'session_service.dart';
 import 'storage_service.dart';
 
 class AuthService {
@@ -15,10 +16,7 @@ class AuthService {
   }) async {
     final response = await _apiService.post(
       '${ApiConfig.loginEndpoint}?token_in_json=true',
-      {
-        'email': email,
-        'password': password,
-      },
+      {'email': email, 'password': password},
       authenticated: false,
     );
 
@@ -27,7 +25,7 @@ class AuthService {
     if (response.statusCode == 200) {
       final result = LoginResponse.fromJson(data);
 
-      await _storageService.saveAuth(
+      await SessionService.startSession(
         token: result.token,
         userId: result.userId,
       );
@@ -36,9 +34,7 @@ class AuthService {
     }
 
     if (response.statusCode == 401) {
-      throw Exception(
-        'Invalid email/username or password',
-      );
+      throw Exception('Invalid email/username or password');
     }
 
     throw Exception(
@@ -57,6 +53,6 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await _storageService.clearAuth();
+    await SessionService.endSession();
   }
 }

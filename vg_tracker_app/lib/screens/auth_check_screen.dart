@@ -1,61 +1,51 @@
 import 'package:flutter/material.dart';
 
-import '../services/auth_service.dart';
+import '../services/session_service.dart';
 import 'home/home_screen.dart';
 import 'login/login_screen.dart';
 
 class AuthCheckScreen extends StatefulWidget {
-  const AuthCheckScreen({
-    super.key,
-  });
+  const AuthCheckScreen({super.key});
 
   @override
-  State<AuthCheckScreen> createState() =>
-      _AuthCheckScreenState();
+  State<AuthCheckScreen> createState() => _AuthCheckScreenState();
 }
 
-class _AuthCheckScreenState
-    extends State<AuthCheckScreen> {
-  final AuthService _authService = AuthService();
+class _AuthCheckScreenState extends State<AuthCheckScreen> {
+  bool _isCheckingSession = true;
 
   @override
   void initState() {
     super.initState();
 
-    _checkAuthentication();
+    _restoreSession();
   }
 
-  Future<void> _checkAuthentication() async {
-    final token = await _authService.getToken();
-    final userId = await _authService.getUserId();
+  Future<void> _restoreSession() async {
+    await SessionService.restoreSession();
 
     if (!mounted) {
       return;
     }
 
-    if (token != null && userId != null) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => HomeScreen(
-            userId: userId,
-          ),
-        ),
-      );
-    } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => const LoginScreen(),
-        ),
-      );
-    }
+    setState(() => _isCheckingSession = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
+    if (_isCheckingSession) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    return ValueListenableBuilder<int?>(
+      valueListenable: SessionService.userId,
+      builder: (context, userId, _) {
+        if (userId == null) {
+          return const LoginScreen();
+        }
+
+        return HomeScreen(userId: userId);
+      },
     );
   }
 }

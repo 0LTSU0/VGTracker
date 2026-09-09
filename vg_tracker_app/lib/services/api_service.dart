@@ -3,14 +3,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
+import 'session_service.dart';
 import 'storage_service.dart';
 
 class ApiService {
   final StorageService _storageService = StorageService();
 
-  Future<Map<String, String>> _getHeaders({
-    bool authenticated = true,
-  }) async {
+  Future<Map<String, String>> _getHeaders({bool authenticated = true}) async {
     final headers = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -31,18 +30,11 @@ class ApiService {
     String endpoint, {
     bool authenticated = true,
   }) async {
-    final url = Uri.parse(
-      '${ApiConfig.baseUrl}$endpoint',
-    );
+    final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
 
-    final headers = await _getHeaders(
-      authenticated: authenticated,
-    );
+    final headers = await _getHeaders(authenticated: authenticated);
 
-    final response = await http.get(
-      url,
-      headers: headers,
-    );
+    final response = await http.get(url, headers: headers);
 
     await _handleUnauthorized(response);
 
@@ -54,13 +46,9 @@ class ApiService {
     Map<String, dynamic> body, {
     bool authenticated = true,
   }) async {
-    final url = Uri.parse(
-      '${ApiConfig.baseUrl}$endpoint',
-    );
+    final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
 
-    final headers = await _getHeaders(
-      authenticated: authenticated,
-    );
+    final headers = await _getHeaders(authenticated: authenticated);
 
     final response = await http.post(
       url,
@@ -78,13 +66,9 @@ class ApiService {
     Map<String, dynamic> body, {
     bool authenticated = true,
   }) async {
-    final url = Uri.parse(
-      '${ApiConfig.baseUrl}$endpoint',
-    );
+    final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
 
-    final headers = await _getHeaders(
-      authenticated: authenticated,
-    );
+    final headers = await _getHeaders(authenticated: authenticated);
 
     final response = await http.put(
       url,
@@ -101,29 +85,20 @@ class ApiService {
     String endpoint, {
     bool authenticated = true,
   }) async {
-    final url = Uri.parse(
-      '${ApiConfig.baseUrl}$endpoint',
-    );
+    final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
 
-    final headers = await _getHeaders(
-      authenticated: authenticated,
-    );
+    final headers = await _getHeaders(authenticated: authenticated);
 
-    final response = await http.delete(
-      url,
-      headers: headers,
-    );
+    final response = await http.delete(url, headers: headers);
 
     await _handleUnauthorized(response);
 
     return response;
   }
 
-  Future<void> _handleUnauthorized(
-    http.Response response,
-  ) async {
+  Future<void> _handleUnauthorized(http.Response response) async {
     if (response.statusCode == 401) {
-      await _storageService.clearAuth();
+      await SessionService.endSession();
     }
   }
 }
